@@ -1,0 +1,305 @@
+<phone:PhoneApplicationPage
+    x:Class="Two_UI_Lock_Screen.MusicSettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:phone="clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone"
+    xmlns:shell="clr-namespace:Microsoft.Phone.Shell;assembly=Microsoft.Phone"
+    FontFamily="{StaticResource SamsungSans}"
+    FontSize="15"
+    Foreground="#FFFFFE"
+    SupportedOrientations="Portrait" Orientation="Portrait"
+    shell:SystemTray.IsVisible="True"
+    shell:SystemTray.Opacity="0"
+    shell:SystemTray.ForegroundColor="#FFFFFE">
+
+    <phone:PhoneApplicationPage.Resources>
+        <!-- Style công tắc One UI Toggle Switch -->
+        <Style x:Key="OneUiToggleSwitchStyle" TargetType="CheckBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid Width="46" Height="26" Background="Transparent">
+                            <Border x:Name="TrackOff" Width="46" Height="26" CornerRadius="13" Background="#38383A" />
+                            <Border x:Name="TrackOn" Width="46" Height="26" CornerRadius="13" Background="#6BA5E7" Opacity="0" />
+                            <Ellipse x:Name="Thumb" Width="20" Height="20" Fill="#FFFFFE"
+                                     HorizontalAlignment="Left" Margin="3,0,0,0" VerticalAlignment="Center">
+                                <Ellipse.RenderTransform>
+                                    <TranslateTransform x:Name="ThumbTransform" X="0" />
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CheckStates">
+                                    <VisualState x:Name="Unchecked">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="TrackOn" Storyboard.TargetProperty="Opacity"
+                                                             To="0" Duration="0:0:0.1" />
+                                            <DoubleAnimation Storyboard.TargetName="ThumbTransform" Storyboard.TargetProperty="X"
+                                                             To="0" Duration="0:0:0.1" />
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Checked">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="TrackOn" Storyboard.TargetProperty="Opacity"
+                                                             To="1" Duration="0:0:0.1" />
+                                            <DoubleAnimation Storyboard.TargetName="ThumbTransform" Storyboard.TargetProperty="X"
+                                                             To="20" Duration="0:0:0.1" />
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Indeterminate" />
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style thanh trượt One UI 6.1 (Rãnh bo tròn 8px, nút kéo tròn trắng tinh tế) -->
+        <Style x:Key="OneUiSliderStyle" TargetType="Slider">
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Background" Value="#38383A" />
+            <Setter Property="Foreground" Value="#6BA5E7" />
+            <Setter Property="Minimum" Value="0" />
+            <Setter Property="Maximum" Value="100" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid Background="Transparent">
+                            <Grid x:Name="HorizontalTemplate" Height="30" VerticalAlignment="Center" Margin="0,4,0,4">
+                                <!-- Rãnh nền xám bo tròn One UI 6.1 -->
+                                <Rectangle x:Name="HorizontalTrack" Fill="{TemplateBinding Background}"
+                                           Height="8" RadiusX="4" RadiusY="4" IsHitTestVisible="False"
+                                           VerticalAlignment="Center" />
+                                <!-- Rãnh tiến độ xanh bo tròn One UI 6.1 -->
+                                <Rectangle x:Name="HorizontalFill" Fill="{TemplateBinding Foreground}"
+                                           Height="8" RadiusX="4" RadiusY="4" IsHitTestVisible="False"
+                                           VerticalAlignment="Center">
+                                    <Rectangle.Clip>
+                                        <RectangleGeometry Rect="0, 0, 6, 8" />
+                                    </Rectangle.Clip>
+                                </Rectangle>
+                                <!-- Nút kéo tròn trắng One UI 6.1 -->
+                                <Rectangle x:Name="HorizontalCenterElement" HorizontalAlignment="Left"
+                                           Fill="#FFFFFE" Width="20" Height="20" RadiusX="10" RadiusY="10"
+                                           VerticalAlignment="Center">
+                                    <Rectangle.RenderTransform>
+                                        <TranslateTransform />
+                                    </Rectangle.RenderTransform>
+                                </Rectangle>
+                            </Grid>
+                            <Grid x:Name="VerticalTemplate" Visibility="Collapsed" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style Ô nhập văn bản One UI (Gạch chân thanh thoát, không hộp viền thô) -->
+        <Style x:Key="OneUiTextBoxStyle" TargetType="TextBox">
+            <Setter Property="FontFamily" Value="{StaticResource SamsungSans}" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Foreground" Value="#FFFFFE" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0,6,0,6" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Grid Background="Transparent">
+                            <ContentControl x:Name="ContentElement" BorderThickness="0" Padding="{TemplateBinding Padding}"
+                                            HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </phone:PhoneApplicationPage.Resources>
+
+    <Grid x:Name="LayoutRoot" Background="#000000">
+        <Grid.RenderTransform>
+            <CompositeTransform x:Name="PageRootTransform" />
+        </Grid.RenderTransform>
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="0,0,0,30">
+
+                <!-- 1. THANH TIÊU ĐỀ ONE UI CHUẨN (< Nhạc) -->
+                <Grid Margin="18,48,18,18">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <!-- Nút Quay lại góc trái: Biểu tượng < chuẩn One UI -->
+                    <Border x:Name="BackNavButton" Width="40" Height="40" HorizontalAlignment="Left" Background="Transparent" Tap="BackNav_Tap">
+                        <Grid>
+                            <Border x:Name="BackNav_Ripple" Background="#24FFFFFF" CornerRadius="20" Opacity="0" IsHitTestVisible="False">
+                                <Border.RenderTransform>
+                                    <CompositeTransform ScaleX="0" ScaleY="1" />
+                                </Border.RenderTransform>
+                            </Border>
+                            <Path Data="M 16,10 L 8,20 L 16,30" Stroke="#A3CBEE" StrokeThickness="2.4"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Path.RenderTransform>
+                                    <TranslateTransform Y="-4" />
+                                </Path.RenderTransform>
+                            </Path>
+                        </Grid>
+                    </Border>
+                    <TextBlock Grid.Column="1" Text="Nhạc" FontSize="23" FontWeight="SemiBold"
+                               FontFamily="{StaticResource SamsungSansMedium}" Foreground="#A3CBEE"
+                               VerticalAlignment="Center" Margin="8,0,0,0" />
+                </Grid>
+
+                <!-- 2. THẺ BẬT / TẮT (Bật) -->
+                <Border Background="#1C1C20" CornerRadius="22" Margin="16,0,16,14" Padding="18,14">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Bật" FontSize="16.5" Foreground="#FFFFFE" VerticalAlignment="Center" />
+                        <CheckBox x:Name="MusicEnabledSwitch" Grid.Column="1" Style="{StaticResource OneUiToggleSwitchStyle}"
+                                  Click="MusicEnabledSwitch_Click" />
+                    </Grid>
+                </Border>
+
+                <!-- 3. KHUNG XEM TRƯỚC TIỆN ÍCH TRÊN HÌNH NỀN (ONE UI 6.1 LIVE PREVIEW) -->
+                <Border Margin="16,0,16,14" Height="150" CornerRadius="22" Background="#1C1C20" BorderBrush="#20FFFFFF" BorderThickness="1">
+                    <Grid>
+                        <!-- Hình nền xem trước -->
+                        <Border CornerRadius="21">
+                            <Border.Background>
+                                <ImageBrush x:Name="PreviewWallpaperBrush" Stretch="UniformToFill" />
+                            </Border.Background>
+                        </Border>
+                        <!-- Lớp phủ mờ nhẹ -->
+                        <Border CornerRadius="21" Background="#30000000" />
+
+                        <!-- Thẻ nhạc xem trước (phản chiếu trực tiếp độ trong suốt từ thanh trượt) -->
+                        <Border x:Name="PreviewMusicCard" Width="380" Height="68" CornerRadius="20"
+                                Background="#9918222A" BorderBrush="#20FFFFFF" BorderThickness="1"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Ảnh bìa album -->
+                                <Border Grid.Column="0" Width="44" Height="44" CornerRadius="10" Margin="12,12,10,12" Background="#30FFFFFF">
+                                    <Image x:Name="PreviewAlbumCover" Width="44" Height="44" Stretch="UniformToFill">
+                                        <Image.Clip>
+                                            <RectangleGeometry Rect="0,0,44,44" RadiusX="10" RadiusY="10" />
+                                        </Image.Clip>
+                                    </Image>
+                                </Border>
+
+                                <!-- Tên bài hát & Nghệ sĩ -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,6,0">
+                                    <TextBlock Text="♪ Điện thoại này" FontSize="10.5" Foreground="#A0B0BC" FontFamily="{StaticResource SamsungSans}" />
+                                    <TextBlock x:Name="PreviewTitleText" Text="Track 1" FontSize="14.5" FontWeight="SemiBold"
+                                               FontFamily="{StaticResource SamsungSansMedium}" Foreground="#FFFFFE"
+                                               TextTrimming="WordEllipsis" Margin="0,1,0,1" />
+                                    <TextBlock x:Name="PreviewArtistText" Text="Samsung" FontSize="11.5" Foreground="#A0B0BC"
+                                               FontFamily="{StaticResource SamsungSans}" TextTrimming="WordEllipsis" />
+                                </StackPanel>
+
+                                <!-- Cụm 3 nút điều khiển lùi/tạm dừng/kế tiếp -->
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+                                    <TextBlock Text="&#xE100;" FontFamily="Segoe UI Symbol" FontSize="15" Foreground="#FFFFFE" Margin="0,0,10,0" />
+                                    <TextBlock Text="&#xE103;" FontFamily="Segoe UI Symbol" FontSize="17" Foreground="#FFFFFE" Margin="0,0,10,0" />
+                                    <TextBlock Text="&#xE101;" FontFamily="Segoe UI Symbol" FontSize="15" Foreground="#FFFFFE" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- 4. THẺ ĐỘ TRONG SUỐT (TRANSPARENCY SLIDER) -->
+                <Border Background="#1C1C20" CornerRadius="22" Margin="16,0,16,14" Padding="18,16">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Độ trong suốt" FontSize="16.5" Foreground="#FFFFFE" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TransparencyPercentText" Grid.Column="1" Text="60%" FontSize="15"
+                                       FontFamily="{StaticResource SamsungSansMedium}" Foreground="#6BA5E7" VerticalAlignment="Center" />
+                        </Grid>
+                        
+                        <!-- Thanh trượt điều chỉnh độ trong suốt chuẩn One UI 6.1 -->
+                        <Slider x:Name="TransparencySlider" Style="{StaticResource OneUiSliderStyle}"
+                                Minimum="0" Maximum="100" Value="60"
+                                Margin="0,12,0,0" ValueChanged="TransparencySlider_ValueChanged" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 5. THẺ MÁY CHỦ PHÁT NHẠC (MUSIC SERVER ENDPOINT - CHUẨN ONE UI 6.1) -->
+                <Border Background="#1C1C20" CornerRadius="22" Margin="16,0,16,14" Padding="18,16">
+                    <StackPanel>
+                        <TextBlock Text="Máy chủ phát nhạc (Music Server)" FontSize="16.5" Foreground="#FFFFFE" />
+                        <TextBlock Text="Đồng bộ trạng thái phát qua Open Lock Screen Music Protocol" FontSize="13" Foreground="#8E8E93" Margin="0,2,0,10" />
+
+                        <!-- Ô nhập địa chỉ máy chủ chuẩn One UI (Gạch chân thanh thoát, hiển thị trọn vẹn) -->
+                        <StackPanel Margin="0,4,0,0">
+                            <TextBox x:Name="MusicEndpointTextBox" Text="http://olmp.local"
+                                     Style="{StaticResource OneUiTextBoxStyle}" />
+                            <Rectangle Height="1.5" Fill="#6BA5E7" Margin="0,1,0,0" />
+                        </StackPanel>
+
+                        <!-- Hàng 2 nút điều khiển One UI (Mặc định | Lưu - Chuẩn ảnh tham chiếu One UI) -->
+                        <Grid Margin="0,16,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <!-- Nút Đặt lại mặc định -->
+                            <Grid Grid.Column="0" x:Name="BtnResetEndpoint" Background="Transparent" Tap="ResetEndpoint_Tap">
+                                <Border x:Name="ResetEndpoint_Ripple" Background="#24FFFFFF" CornerRadius="12" Opacity="0" IsHitTestVisible="False">
+                                    <Border.RenderTransform>
+                                        <CompositeTransform ScaleX="0" ScaleY="1" />
+                                    </Border.RenderTransform>
+                                </Border>
+                                <Border Padding="0,10">
+                                    <TextBlock Text="Mặc định" FontSize="15" Foreground="#A0B0BC"
+                                               FontFamily="{StaticResource SamsungSans}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </Grid>
+
+                            <!-- Vạch ngăn cách dọc chuẩn One UI 6.1 -->
+                            <Rectangle Grid.Column="1" Width="1" Height="22" Fill="#353538" VerticalAlignment="Center" />
+
+                            <!-- Nút Lưu -->
+                            <Grid Grid.Column="2" x:Name="BtnSaveEndpoint" Background="Transparent" Tap="SaveEndpoint_Tap">
+                                <Border x:Name="SaveEndpoint_Ripple" Background="#24FFFFFF" CornerRadius="12" Opacity="0" IsHitTestVisible="False">
+                                    <Border.RenderTransform>
+                                        <CompositeTransform ScaleX="0" ScaleY="1" />
+                                    </Border.RenderTransform>
+                                </Border>
+                                <Border Padding="0,10">
+                                    <TextBlock Text="Lưu" FontSize="15" FontWeight="SemiBold"
+                                               FontFamily="{StaticResource SamsungSansMedium}" Foreground="#6BA5E7" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </Grid>
+                        </Grid>
+
+                        <TextBlock Text="* Mặc định là http://olmp.local (tự động ánh xạ tới http://127.0.0.1:8088). Tương thích với YTMusicWP và mọi app nhạc hỗ trợ OLMP v2.0."
+                                   FontSize="12" Foreground="#8E8E93" TextWrapping="Wrap" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</phone:PhoneApplicationPage>

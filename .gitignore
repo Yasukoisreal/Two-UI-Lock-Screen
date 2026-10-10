@@ -1,0 +1,37 @@
+## Visual Studio & MSBuild
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## Build outputs
+[Bb]in/
+[Oo]bj/
+[Aa]pp[Pp]ackages/
+_UpgradeReport_Files/
+UpgradeLog*.XML
+UpgradeLog*.htm
+
+## Windows Phone Packages & Temporary Artifacts
+*.xap
+*.appx
+*.appxbundle
+*.mdil
+MDILProjectFiles.xml
+
+## Whitelist critical project binary dependencies
+!Two UI Lock Screen/LockScreen.Bridge.dll
+!Two UI Lock Screen/Libs/
+!Two UI Lock Screen/Libs/**
+
+## Windows System & Editor Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.orig
+*.bak
+
+## Scratch / Temporary Files
+scratch/

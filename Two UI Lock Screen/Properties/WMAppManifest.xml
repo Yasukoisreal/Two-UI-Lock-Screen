@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Deployment xmlns="http://schemas.microsoft.com/windowsphone/2014/deployment" AppPlatformVersion="8.1">
+  <DefaultLanguage xmlns="" code="en-US"/>
+  <App xmlns="" ProductID="{ce3a312a-e303-4f85-a78d-e0ed6c593f43}" Title="Two UI" RuntimeType="Silverlight" Version="1.0.0.0" Genre="apps.normal" Author="Two_UI_Lock_Screen author" Description="Samsung One UI Style Live Lock Screen for Windows Phone 8.1" SDOptOut="false" BackUpOptOut="false" Publisher="Two_UI_Lock_Screen" PublisherID="{43b7add0-d10a-4de2-9b8d-db36dc12be7d}">
+    <IconPath IsRelative="true" IsResource="false">Assets\ApplicationIcon.png</IconPath>
+    <Capabilities>
+      <!-- MANDATORY: Grants Silverlight execution privileges for lock screen APIs -->
+      <Capability Name="ID_CAP_SHELL_DEVICE_LOCK_UI_API"/>
+      <Capability Name="ID_CAP_NETWORKING"/>
+      <!-- For Flashlight / LED Torch and in-process camera preview -->
+      <Capability Name="ID_CAP_ISV_CAMERA"/>
+      <Capability Name="ID_CAP_MEDIALIB_PHOTO"/>
+      <!-- For Calendar & Appointments widget -->
+      <Capability Name="ID_CAP_APPOINTMENTS"/>
+      <Capability Name="ID_CAP_MEDIALIB_AUDIO"/>
+      <Capability Name="ID_CAP_MEDIALIB_PLAYBACK"/>
+      <Capability Name="ID_CAP_SENSORS"/>
+      <Capability Name="ID_CAP_LOCATION"/>
+    </Capabilities>
+    <Tasks>
+      <DefaultTask Name="_default" NavigationPage="LockRouter.xaml" ActivationPolicy="Resume"/>
+    </Tasks>
+    <Tokens>
+      <PrimaryToken TokenID="Two_UI_Lock_ScreenToken" TaskName="_default">
+        <TemplateFlip>
+          <SmallImageURI IsRelative="true" IsResource="false">Assets\Tiles\FlipCycleTileSmall.png</SmallImageURI>
+          <Count>0</Count>
+          <BackgroundImageURI IsRelative="true" IsResource="false">Assets\Tiles\FlipCycleTileMedium.png</BackgroundImageURI>
+          <Title>Two UI</Title>
+          <LargeBackgroundImageURI IsRelative="true" IsResource="false">Assets\Tiles\FlipCycleTileLarge.png</LargeBackgroundImageURI>
+          <HasLarge>true</HasLarge>
+        </TemplateFlip>
+      </PrimaryToken>
+    </Tokens>
+    <Extensions>
+      <!-- Contract 1: Live Lock Screen Application -->
+      <Extension ExtensionName="LockScreen_Application"
+                 ConsumerID="{CD4601F6-351B-43C7-9087-6B12BD98ED63}"
+                 TaskID="_default"
+                 ExtraFile="Extensions\\LockAppExtension.xml" />
+      <!-- Contract 2: LockScreen_Background static fallback/provider -->
+      <Extension ExtensionName="LockScreen_Background"
+                 ConsumerID="{111DFF24-AA15-4A96-8006-2BFF8122084F}"
+                 TaskID="_default" />
+    </Extensions>
+    <ActivatableClasses>
+      <InProcessServer>
+        <Path>LockScreen.Bridge.dll</Path>
+        <ActivatableClass ActivatableClassId="LockScreen_Bridge.Badge" ThreadingModel="both" />
+        <ActivatableClass ActivatableClassId="LockScreen_Bridge.DetailedText" ThreadingModel="both" />
+        <ActivatableClass ActivatableClassId="LockScreen_Bridge.DeviceLockscreenSnapshot" ThreadingModel="both" />
+        <ActivatableClass ActivatableClassId="LockScreen_Bridge.LockScreenInfoProvider" ThreadingModel="both" />
+        <ActivatableClass ActivatableClassId="LockScreen_Bridge.WindowsPhoneRuntimeComponent" ThreadingModel="both" />
+      </InProcessServer>
+    </ActivatableClasses>
+    <ScreenResolutions>
+      <ScreenResolution Name="ID_RESOLUTION_WVGA"/>
+      <ScreenResolution Name="ID_RESOLUTION_WXGA"/>
+      <ScreenResolution Name="ID_RESOLUTION_HD720P"/>
+    </ScreenResolutions>
+  </App>
+</Deployment>

@@ -1,0 +1,59 @@
+<phone:PhoneApplicationPage
+    x:Class="Two_UI_Lock_Screen.OpenSourceLicensesPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:phone="clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone"
+    xmlns:shell="clr-namespace:Microsoft.Phone.Shell;assembly=Microsoft.Phone"
+    FontFamily="{StaticResource SamsungSans}"
+    FontSize="15"
+    Foreground="#FFFFFE"
+    SupportedOrientations="Portrait" Orientation="Portrait"
+    shell:SystemTray.IsVisible="True"
+    shell:SystemTray.Opacity="0"
+    shell:SystemTray.ForegroundColor="#FFFFFE">
+
+    <Grid x:Name="LayoutRoot" Background="#000000">
+        <Grid.RenderTransform>
+            <CompositeTransform x:Name="PageRootTransform" />
+        </Grid.RenderTransform>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 1. THANH TIÊU ĐỀ ONE UI CHUẨN (< Giấy phép nguồn mở) -->
+        <Grid Grid.Row="0" Margin="18,48,18,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Nút Quay lại góc trái: Biểu tượng < chuẩn One UI (căn thẳng quang học) -->
+            <Border x:Name="BackNavButton" Width="40" Height="40" HorizontalAlignment="Left" Background="Transparent" Tap="BackNav_Tap">
+                <Grid>
+                    <Border x:Name="BackNav_Ripple" Background="#24FFFFFF" CornerRadius="20" Opacity="0" IsHitTestVisible="False">
+                        <Border.RenderTransform>
+                            <CompositeTransform ScaleX="0" ScaleY="1" />
+                        </Border.RenderTransform>
+                    </Border>
+                    <Path Data="M 16,10 L 8,20 L 16,30" Stroke="#8DBBF0" StrokeThickness="2.4"
+                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                          HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Path.RenderTransform>
+                            <TranslateTransform Y="-4" />
+                        </Path.RenderTransform>
+                    </Path>
+                </Grid>
+            </Border>
+
+            <TextBlock Grid.Column="1" Text="Giấy phép nguồn mở" FontSize="23" FontWeight="SemiBold"
+                       FontFamily="{StaticResource SamsungSansMedium}" Foreground="#8DBBF0"
+                       VerticalAlignment="Center" Margin="8,0,0,0" />
+        </Grid>
+
+        <!-- 2. VÙNG CUỘN HIỂN THỊ TRỰC TIẾP TOÀN VĂN GIẤY PHÉP (CHUẨN SAMSUNG ONE UI 6.1) -->
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="LicenseContainer" Margin="14,6,14,30" />
+        </ScrollViewer>
+    </Grid>
+</phone:PhoneApplicationPage>

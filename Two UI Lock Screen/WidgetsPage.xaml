@@ -1,0 +1,217 @@
+<phone:PhoneApplicationPage
+    x:Class="Two_UI_Lock_Screen.WidgetsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:phone="clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone"
+    xmlns:shell="clr-namespace:Microsoft.Phone.Shell;assembly=Microsoft.Phone"
+    FontFamily="{StaticResource SamsungSans}"
+    FontSize="15"
+    Foreground="#FFFFFE"
+    SupportedOrientations="Portrait" Orientation="Portrait"
+    shell:SystemTray.IsVisible="True"
+    shell:SystemTray.Opacity="0"
+    shell:SystemTray.ForegroundColor="#FFFFFE">
+
+    <phone:PhoneApplicationPage.Resources>
+        <!-- Style công tắc One UI Toggle Switch -->
+        <Style x:Key="OneUiToggleSwitchStyle" TargetType="CheckBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid Width="46" Height="26" Background="Transparent">
+                            <Border x:Name="TrackOff" Width="46" Height="26" CornerRadius="13" Background="#38383A" />
+                            <Border x:Name="TrackOn" Width="46" Height="26" CornerRadius="13" Background="#6BA5E7" Opacity="0" />
+                            <Ellipse x:Name="Thumb" Width="20" Height="20" Fill="#FFFFFE"
+                                     HorizontalAlignment="Left" Margin="3,0,0,0" VerticalAlignment="Center">
+                                <Ellipse.RenderTransform>
+                                    <TranslateTransform x:Name="ThumbTransform" X="0" />
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CheckStates">
+                                    <VisualState x:Name="Unchecked">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="TrackOn" Storyboard.TargetProperty="Opacity"
+                                                             To="0" Duration="0:0:0.1" />
+                                            <DoubleAnimation Storyboard.TargetName="ThumbTransform" Storyboard.TargetProperty="X"
+                                                             To="0" Duration="0:0:0.1" />
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Checked">
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="TrackOn" Storyboard.TargetProperty="Opacity"
+                                                             To="1" Duration="0:0:0.1" />
+                                            <DoubleAnimation Storyboard.TargetName="ThumbTransform" Storyboard.TargetProperty="X"
+                                                             To="20" Duration="0:0:0.1" />
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Indeterminate" />
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </phone:PhoneApplicationPage.Resources>
+
+    <Grid x:Name="LayoutRoot" Background="#000000">
+        <Grid.RenderTransform>
+            <CompositeTransform x:Name="PageRootTransform" />
+        </Grid.RenderTransform>
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="0,0,0,30">
+
+                <!-- 1. THANH TIÊU ĐỀ ONE UI CHUẨN (< Widget) -->
+                <Grid Margin="18,48,18,14">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <!-- Nút Quay lại góc trái: Biểu tượng < chuẩn One UI (căn thẳng quang học) -->
+                    <Border x:Name="BackNavButton" Width="40" Height="40" HorizontalAlignment="Left" Background="Transparent" Tap="BackNav_Tap">
+                        <Grid>
+                            <Border x:Name="BackNav_Ripple" Background="#24FFFFFF" CornerRadius="20" Opacity="0" IsHitTestVisible="False">
+                                <Border.RenderTransform>
+                                    <CompositeTransform ScaleX="0" ScaleY="1" />
+                                </Border.RenderTransform>
+                            </Border>
+                            <Path Data="M 16,10 L 8,20 L 16,30" Stroke="#A3CBEE" StrokeThickness="2.4"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Path.RenderTransform>
+                                    <TranslateTransform Y="-4" />
+                                </Path.RenderTransform>
+                            </Path>
+                        </Grid>
+                    </Border>
+                    <TextBlock Grid.Column="1" Text="Widget" FontSize="23" FontWeight="SemiBold"
+                               FontFamily="{StaticResource SamsungSansMedium}" Foreground="#A3CBEE"
+                               VerticalAlignment="Center" Margin="8,0,0,0" />
+                </Grid>
+
+                <!-- Dòng mô tả chuẩn One UI 6.1 trên đầu -->
+                <TextBlock Text="Chọn các tiện ích để hiển thị khi bạn tương tác hoặc xem trên Màn hình khóa."
+                           FontSize="13" Foreground="#8E8E93" TextWrapping="Wrap" Margin="32,0,32,18" />
+
+                <!-- 2. THẺ DANH SÁCH CÁC WIDGET (CHUẨN ONE UI 6.1) -->
+                <Border Background="#1C1C20" CornerRadius="22" Margin="16,0,16,14">
+                    <StackPanel>
+
+                        <!-- Mục 1: Nhạc (Tiện ích Âm nhạc - Split Switch Item) -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <!-- Nửa bên trái: Nhấn mở trang cài đặt chi tiết Nhạc -->
+                            <Grid Grid.Column="0" x:Name="RowMusicLeft" Background="Transparent" Tap="MusicDetails_Tap">
+                                <Border x:Name="Music_Ripple" Background="#24FFFFFF" CornerRadius="22,0,0,0" Opacity="0" IsHitTestVisible="False">
+                                    <Border.RenderTransform>
+                                        <CompositeTransform ScaleX="0" ScaleY="1" />
+                                    </Border.RenderTransform>
+                                </Border>
+                                <StackPanel VerticalAlignment="Center" Margin="18,14,0,14">
+                                    <TextBlock Text="Nhạc" FontSize="16.5" Foreground="#FFFFFE" />
+                                    <TextBlock x:Name="MusicSubtitle" Text="Độ trong suốt: 60% • http://olmp.local" FontSize="13" Foreground="#8E8E93" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Vạch ngăn cách dọc chuẩn One UI 6.1 -->
+                            <Rectangle Grid.Column="1" Width="1" Height="22" Fill="#353538" Margin="14,0,14,0" VerticalAlignment="Center" />
+
+                            <!-- Nửa bên phải: Công tắc bật/tắt nhanh Nhạc -->
+                            <CheckBox Grid.Column="2" x:Name="MusicSwitch" Style="{StaticResource OneUiToggleSwitchStyle}"
+                                      Margin="0,0,18,0" Click="MusicSwitch_Click" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Rectangle Height="1" Fill="#28282C" Margin="18,0,0,0" />
+
+                        <!-- Mục 2: Thời tiết -->
+                        <Border Padding="18,14">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Thời tiết" FontSize="16.5" Foreground="#FFFFFE" />
+                                    <TextBlock Text="Nhiệt độ và điều kiện thời tiết địa phương" FontSize="13" Foreground="#8E8E93" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <CheckBox Grid.Column="1" x:Name="WeatherSwitch" Style="{StaticResource OneUiToggleSwitchStyle}"
+                                          Click="WeatherSwitch_Click" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+
+                        <Rectangle Height="1" Fill="#28282C" Margin="18,0,0,0" />
+
+                        <!-- Mục 3: Pin và Chỉ số UV (Khay Squircle) -->
+                        <Border Padding="18,14">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Pin và Chỉ số UV" FontSize="16.5" Foreground="#FFFFFE" />
+                                    <TextBlock Text="Vòng đo phần trăm pin và mức bức xạ UV" FontSize="13" Foreground="#8E8E93" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <CheckBox Grid.Column="1" x:Name="BatterySwitch" Style="{StaticResource OneUiToggleSwitchStyle}"
+                                          Click="BatterySwitch_Click" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+
+                        <Rectangle Height="1" Fill="#28282C" Margin="18,0,0,0" />
+
+                        <!-- Mục 4: Lịch hôm nay -->
+                        <Border Padding="18,14">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Lịch hôm nay" FontSize="16.5" Foreground="#FFFFFE" />
+                                    <TextBlock Text="Lịch trình và sự kiện sắp tới" FontSize="13" Foreground="#8E8E93" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <CheckBox Grid.Column="1" x:Name="CalendarSwitch" Style="{StaticResource OneUiToggleSwitchStyle}"
+                                          Click="CalendarSwitch_Click" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+
+                        <Rectangle Height="1" Fill="#28282C" Margin="18,0,0,0" />
+
+                        <!-- Mục 5: Báo thức tiếp theo -->
+                        <Border Padding="18,14">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Báo thức tiếp theo" FontSize="16.5" Foreground="#FFFFFE" />
+                                    <TextBlock Text="Thời gian chuông báo thức kế tiếp" FontSize="13" Foreground="#8E8E93" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <CheckBox Grid.Column="1" x:Name="AlarmSwitch" Style="{StaticResource OneUiToggleSwitchStyle}"
+                                          Click="AlarmSwitch_Click" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+
+                    </StackPanel>
+                </Border>
+
+                <!-- Dòng ghi chú dưới cùng -->
+                <TextBlock Text="Các tiện ích đã bật sẽ tự động xuất hiện trên Màn hình khóa khi có thông tin hoạt động."
+                           FontSize="13" Foreground="#8E8E93" TextWrapping="Wrap" Margin="32,6,32,24" />
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</phone:PhoneApplicationPage>
