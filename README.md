@@ -1,6 +1,10 @@
-# Two UI Lock Screen
+<div align="center">
+  <img src="Two%20UI%20Lock%20Screen/Assets/ApplicationIcon.png" width="96" height="96" alt="Two UI App Icon" style="border-radius: 20px;" />
 
-A pixel-perfect, high-performance Samsung One UI 6.1 Live Lock Screen experience crafted for **Windows Phone 8.1 Silverlight** (Lumia 520/530 up to Lumia 930/1520).
+  # Two UI Lock Screen
+
+  A pixel-perfect, high-performance Samsung One UI 6.1 Live Lock Screen experience crafted for **Windows Phone 8.1 Silverlight** (Lumia 520/530 up to Lumia 930/1520).
+</div>
 
 ---
 
