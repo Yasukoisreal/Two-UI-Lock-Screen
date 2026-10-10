@@ -3424,7 +3424,7 @@ namespace Two_UI_Lock_Screen
                 musicTransitionStory = null;
                 MusicWidgetCard.Height = MusicExpandedCardHeight;
                 if (MusicArrowTransform != null) MusicArrowTransform.Rotation = 180.0;
-                if (MusicCollapsedInfoTransform != null) MusicCollapsedInfoTransform.TranslateX = -60.0;
+                if (MusicCollapsedInfoTransform != null) MusicCollapsedInfoTransform.TranslateX = -68.0;
 
                 if (MusicThumbBorderCollapsed != null)
                 {
