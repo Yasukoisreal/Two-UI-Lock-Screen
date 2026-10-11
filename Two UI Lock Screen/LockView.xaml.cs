@@ -59,6 +59,9 @@ namespace Two_UI_Lock_Screen
         private bool _isRightShortcutActive = false;
         private bool _hasShortcutVibrated = false;
         private const double ShortcutUnlockThreshold = 240.0;
+        private bool _isUnlockGestureActive = false;
+        private bool _isSeeking = false;
+        private double _currentSeekX = 0.0;
 
         public LockView()
         {
@@ -92,6 +95,8 @@ namespace Two_UI_Lock_Screen
                 isPinPadOpen = false;
                 isPinLocked = false;
                 pinpadBoundaryY = 0.0;
+                _isUnlockGestureActive = false;
+                _isSeeking = false;
                 if (bounceBackStory != null)
                 {
                     try { bounceBackStory.Stop(); } catch { }
@@ -335,17 +340,56 @@ namespace Two_UI_Lock_Screen
             AttachPressEffect(UvTileBorder);
             AttachPressEffect(WeatherTileBorder);
 
-            // Các nút tiện ích âm nhạc One UI 6.1 (Press Feedback)
-            AttachPressEffect(MusicArrowBtn);
-            AttachPressEffect(MusicPrevBtnCollapsed);
-            AttachPressEffect(MusicPlayPauseBtnCollapsed);
-            AttachPressEffect(MusicNextBtnCollapsed);
+            // Vòng tròn nổi bật bán trong suốt chuẩn Android One UI 6.1 khi chạm/nhấn vào các nút trong widget
+            SetupButtonPressEffect(MusicPrevBtnCollapsed, MusicPrevHighlightCollapsed);
+            SetupButtonPressEffect(MusicPlayPauseBtnCollapsed, MusicPlayPauseHighlightCollapsed);
+            SetupButtonPressEffect(MusicNextBtnCollapsed, MusicNextHighlightCollapsed);
+            SetupButtonPressEffect(MusicArrowBtn, MusicArrowHighlight);
 
-            AttachPressEffect(MusicLeftActionBtn);
-            AttachPressEffect(MusicPrevBtnExpanded);
-            AttachPressEffect(MusicPlayPauseBtnExpanded);
-            AttachPressEffect(MusicNextBtnExpanded);
-            AttachPressEffect(MusicRightActionBtn);
+            SetupButtonPressEffect(MusicLeftActionBtn, MusicLeftActionHighlight);
+            SetupButtonPressEffect(MusicPrevBtnExpanded, MusicPrevHighlightExpanded);
+            SetupButtonPressEffect(MusicPlayPauseBtnExpanded, MusicPlayPauseHighlightExpanded);
+            SetupButtonPressEffect(MusicNextBtnExpanded, MusicNextHighlightExpanded);
+            SetupButtonPressEffect(MusicRightActionBtn, MusicRightActionHighlight);
+        }
+
+        private void SetupButtonPressEffect(FrameworkElement btn, UIElement highlight)
+        {
+            if (btn == null || highlight == null) return;
+
+            btn.MouseLeftButtonDown += (s, e) =>
+            {
+                AnimateHighlight(highlight, 1.0, 50);
+            };
+
+            btn.MouseLeftButtonUp += (s, e) =>
+            {
+                AnimateHighlight(highlight, 0.0, 180);
+            };
+
+            btn.MouseLeave += (s, e) =>
+            {
+                AnimateHighlight(highlight, 0.0, 150);
+            };
+        }
+
+        private void AnimateHighlight(UIElement target, double toOpacity, double durationMs)
+        {
+            if (target == null) return;
+            try
+            {
+                var anim = new DoubleAnimation
+                {
+                    To = toOpacity,
+                    Duration = TimeSpan.FromMilliseconds(durationMs),
+                    EasingFunction = new CubicEase { EasingMode = toOpacity > 0 ? EasingMode.EaseOut : EasingMode.EaseIn }
+                };
+                var sb = new Storyboard();
+                Storyboard.SetTarget(anim, target);
+                Storyboard.SetTargetProperty(anim, new PropertyPath("Opacity"));
+                sb.Begin();
+            }
+            catch { }
         }
 
         private void AttachPressEffect(FrameworkElement element)
@@ -1083,6 +1127,44 @@ namespace Two_UI_Lock_Screen
 
             try
             {
+                // 1. Phím tắt góc dưới đang kéo -> bỏ qua
+                if (_isShortcutDragging)
+                {
+                    _isUnlockGestureActive = false;
+                    return;
+                }
+
+                // 2. Nếu điểm chạm nằm trong vùng Tiện ích Âm nhạc (MusicWidgetCard), tuyệt đối không kích hoạt mở khóa
+                if (MusicWidgetCard != null && MusicWidgetCard.Visibility == Visibility.Visible)
+                {
+                    try
+                    {
+                        GeneralTransform gt = MusicWidgetCard.TransformToVisual(LayoutRoot);
+                        Point cardTopLeft = gt.Transform(new Point(0, 0));
+                        Rect cardRect = new Rect(cardTopLeft.X - 4.0, cardTopLeft.Y - 4.0, MusicWidgetCard.ActualWidth + 8.0, MusicWidgetCard.ActualHeight + 8.0);
+                        if (cardRect.Contains(e.ManipulationOrigin))
+                        {
+                            _isUnlockGestureActive = false;
+                            return;
+                        }
+                    }
+                    catch { }
+                }
+
+                // 3. Nếu điểm chạm nằm trong vùng 2 phím tắt ở 2 góc dưới (Flashlight & Camera)
+                double screenW = LayoutRoot.ActualWidth > 0 ? LayoutRoot.ActualWidth : 480.0;
+                double screenH = LayoutRoot.ActualHeight > 0 ? LayoutRoot.ActualHeight : 800.0;
+                if (e.ManipulationOrigin.Y >= screenH - 90.0)
+                {
+                    if (e.ManipulationOrigin.X <= 90.0 || e.ManipulationOrigin.X >= screenW - 90.0)
+                    {
+                        _isUnlockGestureActive = false;
+                        return;
+                    }
+                }
+
+                _isUnlockGestureActive = true;
+
                 if (bounceBackStory != null)
                 {
                     try { bounceBackStory.Stop(); } catch { }
@@ -1142,6 +1224,7 @@ namespace Two_UI_Lock_Screen
         private void LayoutRoot_ManipulationDelta(object sender, ManipulationDeltaEventArgs e)
         {
             if (!SystemProtection.ScreenLocked) return;
+            if (!_isUnlockGestureActive) return;
 
             try
             {
@@ -1206,6 +1289,8 @@ namespace Two_UI_Lock_Screen
         private void LayoutRoot_ManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
         {
             if (!SystemProtection.ScreenLocked) return;
+            if (!_isUnlockGestureActive) return;
+            _isUnlockGestureActive = false;
 
             try
             {
@@ -1265,6 +1350,7 @@ namespace Two_UI_Lock_Screen
 
         private void AnimateBackToNormal()
         {
+            _isUnlockGestureActive = false;
             // Chỉ gửi tín hiệu hạ PIN về OS nếu trước đó đã thực sự phát tín hiệu BeginUnlock()
             if (isUnlockingStarted)
             {
@@ -3087,6 +3173,7 @@ namespace Two_UI_Lock_Screen
 
         private void OnMusicPositionTick(long positionMs, long durationMs)
         {
+            if (_isSeeking) return;
             MusicCurrentTimeText.Text = FormatMs(positionMs);
             if (durationMs > 0)
             {
@@ -3673,16 +3760,99 @@ namespace Two_UI_Lock_Screen
             UpdateSeekbar(svc.PositionMs, svc.DurationMs);
         }
 
-        private async void MusicSeekbarContainer_Tap(object sender, System.Windows.Input.GestureEventArgs e)
+        private void MusicSeekbarContainer_ManipulationStarted(object sender, ManipulationStartedEventArgs e)
         {
             e.Handled = true;
             var svc = MusicWidgetService.Instance;
             if (!svc.CanSeek || svc.DurationMs <= 0 || MusicSeekbarContainer == null) return;
+
+            _isSeeking = true;
+            _currentSeekX = e.ManipulationOrigin.X;
+            UpdateSeekUiFromTouchX(_currentSeekX);
+
+            if (MusicSeekThumbTransform != null)
+            {
+                AnimateScale(MusicSeekThumbTransform, 1.25, 100);
+            }
+        }
+
+        private void MusicSeekbarContainer_ManipulationDelta(object sender, ManipulationDeltaEventArgs e)
+        {
+            e.Handled = true;
+            if (!_isSeeking || MusicSeekbarContainer == null) return;
+
+            _currentSeekX += e.DeltaManipulation.Translation.X;
+            UpdateSeekUiFromTouchX(_currentSeekX);
+        }
+
+        private async void MusicSeekbarContainer_ManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
+        {
+            e.Handled = true;
+            if (!_isSeeking) return;
+
+            if (MusicSeekThumbTransform != null)
+            {
+                AnimateScale(MusicSeekThumbTransform, 1.0, 150);
+            }
+
+            var svc = MusicWidgetService.Instance;
+            if (svc.CanSeek && svc.DurationMs > 0 && MusicSeekbarContainer != null)
+            {
+                double totalWidth = MusicSeekbarContainer.ActualWidth > 0 ? MusicSeekbarContainer.ActualWidth : 400.0;
+                double ratio = Math.Max(0.0, Math.Min(1.0, _currentSeekX / totalWidth));
+                long seekPos = (long)(ratio * svc.DurationMs);
+                try
+                {
+                    await svc.SendSeekAsync(seekPos);
+                }
+                catch { }
+            }
+
+            _isSeeking = false;
+        }
+
+        private void UpdateSeekUiFromTouchX(double touchX)
+        {
+            var svc = MusicWidgetService.Instance;
+            if (svc.DurationMs <= 0 || MusicSeekbarContainer == null) return;
+
+            double totalWidth = MusicSeekbarContainer.ActualWidth > 0 ? MusicSeekbarContainer.ActualWidth : 400.0;
+            double clampedX = Math.Max(0.0, Math.Min(totalWidth, touchX));
+            _currentSeekX = clampedX;
+            double ratio = clampedX / totalWidth;
+
+            double playedWidth = clampedX;
+            if (MusicSeekPlayedTrack != null) MusicSeekPlayedTrack.Width = playedWidth;
+
+            UpdateWaveProgress(playedWidth, svc.IsPlaying);
+
+            double thumbX = Math.Max(0.0, Math.Min(totalWidth - 18.0, playedWidth - 9.0));
+            if (MusicSeekThumb != null)
+            {
+                MusicSeekThumb.Margin = new Thickness(thumbX, 14, 0, 0);
+            }
+
+            long estimatedMs = (long)(ratio * svc.DurationMs);
+            MusicCurrentTimeText.Text = FormatMs(estimatedMs);
+        }
+
+        private async void MusicSeekbarContainer_Tap(object sender, System.Windows.Input.GestureEventArgs e)
+        {
+            e.Handled = true;
+            if (_isSeeking) return;
+            var svc = MusicWidgetService.Instance;
+            if (!svc.CanSeek || svc.DurationMs <= 0 || MusicSeekbarContainer == null) return;
             Point p = e.GetPosition(MusicSeekbarContainer);
+            UpdateSeekUiFromTouchX(p.X);
             double totalWidth = MusicSeekbarContainer.ActualWidth > 0 ? MusicSeekbarContainer.ActualWidth : 400.0;
             double ratio = Math.Max(0.0, Math.Min(1.0, p.X / totalWidth));
             long seekPos = (long)(ratio * svc.DurationMs);
             await svc.SendSeekAsync(seekPos);
+        }
+
+        private void MusicWidgetCard_ManipulationDelta(object sender, ManipulationDeltaEventArgs e)
+        {
+            e.Handled = true;
         }
 
         private string _currentAppIconKey = null;
@@ -3943,22 +4113,25 @@ namespace Two_UI_Lock_Screen
                 MusicSeekbarContainer.Opacity = svc.CanSeek ? 1.0 : 0.45;
             }
 
-            long currentEst = svc.CurrentEstimatedPositionMs;
-            MusicCurrentTimeText.Text = FormatMs(currentEst);
-            if (svc.DurationMs > 0)
+            if (!_isSeeking)
             {
-                MusicTotalTimeText.Text = FormatMs(svc.DurationMs);
-                UpdateSeekbar(currentEst, svc.DurationMs);
-                if (MusicSeekThumb != null) MusicSeekThumb.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                MusicTotalTimeText.Text = "Trực tiếp";
-                if (MusicSeekPlayedTrack != null) MusicSeekPlayedTrack.Width = 0;
-                if (MusicSeekBufferedTrack != null) MusicSeekBufferedTrack.Width = 0;
-                if (MusicSeekWaveCanvas != null) MusicSeekWaveCanvas.Visibility = Visibility.Collapsed;
-                StopWaveAnimation();
-                if (MusicSeekThumb != null) MusicSeekThumb.Visibility = Visibility.Collapsed;
+                long currentEst = svc.CurrentEstimatedPositionMs;
+                MusicCurrentTimeText.Text = FormatMs(currentEst);
+                if (svc.DurationMs > 0)
+                {
+                    MusicTotalTimeText.Text = FormatMs(svc.DurationMs);
+                    UpdateSeekbar(currentEst, svc.DurationMs);
+                    if (MusicSeekThumb != null) MusicSeekThumb.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    MusicTotalTimeText.Text = "Trực tiếp";
+                    if (MusicSeekPlayedTrack != null) MusicSeekPlayedTrack.Width = 0;
+                    if (MusicSeekBufferedTrack != null) MusicSeekBufferedTrack.Width = 0;
+                    if (MusicSeekWaveCanvas != null) MusicSeekWaveCanvas.Visibility = Visibility.Collapsed;
+                    StopWaveAnimation();
+                    if (MusicSeekThumb != null) MusicSeekThumb.Visibility = Visibility.Collapsed;
+                }
             }
 
             // Tải ảnh bìa album (Căn giữa chuẩn xác cả ảnh 16:9 và 1:1)

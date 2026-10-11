@@ -162,7 +162,8 @@
                 <!-- TIỆN ÍCH PHÁT NHẠC SAMSUNG ONE UI 6.1 (LISTEN TOGETHER SYNC) -->
                 <Border x:Name="MusicWidgetCard" Width="432" Height="82" CornerRadius="24" Margin="0,12,0,0"
                         Background="#D018222A" BorderBrush="#1FFFFFFF" BorderThickness="1"
-                        Visibility="Collapsed" Tap="MusicWidgetCard_Tap">
+                        Visibility="Collapsed" Tap="MusicWidgetCard_Tap"
+                        ManipulationDelta="MusicWidgetCard_ManipulationDelta">
                     <Grid>
                         <!-- Chế độ Mở rộng: Nền ảnh bìa mờ phóng to tràn viền phủ toàn bộ card -->
                         <Border x:Name="MusicExpandedBg" CornerRadius="24" Opacity="0" Visibility="Collapsed">
@@ -225,13 +226,17 @@
                                 <CompositeTransform x:Name="MusicCollapsedControlsTransform" />
                             </StackPanel.RenderTransform>
                             <!-- Nút Lùi bài -->
-                            <Border x:Name="MusicPrevBtnCollapsed" Width="32" Height="34" Background="Transparent" Tap="MusicPrev_Tap">
-                                <Path Data="M14.029,11.6C14.792,11.6 15.408,12.164 15.408,12.86L15.408,18.866C15.433,18.849 15.448,18.831 15.474,18.816L25.137,12.277C25.423,12.107 25.721,12.02 26.019,12.02C26.683,12.02 27.35,12.487 27.35,13.381L27.35,26.619C27.35,27.513 26.683,27.98 26.019,27.98C25.721,27.98 25.425,27.894 25.137,27.723L15.474,21.183C15.448,21.168 15.433,21.149 15.408,21.134L15.408,27.14C15.408,27.836 14.792,28.4 14.029,28.4C13.268,28.4 12.65,27.836 12.65,27.14L12.65,12.86C12.65,12.164 13.268,11.6 14.029,11.6"
-                                      Fill="#FFFFFE" Stretch="Uniform" Width="14" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Border x:Name="MusicPrevBtnCollapsed" Width="34" Height="34" Background="Transparent" Tap="MusicPrev_Tap">
+                                <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="34" Height="34">
+                                    <Border x:Name="MusicPrevHighlightCollapsed" Width="34" Height="34" CornerRadius="17" Background="#35FFFFFF" Opacity="0" IsHitTestVisible="False" />
+                                    <Path Data="M14.029,11.6C14.792,11.6 15.408,12.164 15.408,12.86L15.408,18.866C15.433,18.849 15.448,18.831 15.474,18.816L25.137,12.277C25.423,12.107 25.721,12.02 26.019,12.02C26.683,12.02 27.35,12.487 27.35,13.381L27.35,26.619C27.35,27.513 26.683,27.98 26.019,27.98C25.721,27.98 25.425,27.894 25.137,27.723L15.474,21.183C15.448,21.168 15.433,21.149 15.408,21.134L15.408,27.14C15.408,27.836 14.792,28.4 14.029,28.4C13.268,28.4 12.65,27.836 12.65,27.14L12.65,12.86C12.65,12.164 13.268,11.6 14.029,11.6"
+                                          Fill="#FFFFFE" Stretch="Uniform" Width="14" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Grid>
                             </Border>
                             <!-- Nút Play/Pause -->
-                            <Border x:Name="MusicPlayPauseBtnCollapsed" Width="36" Height="34" Background="Transparent" Tap="MusicPlayPause_Tap" Margin="4,0,4,0">
-                                <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Border x:Name="MusicPlayPauseBtnCollapsed" Width="38" Height="34" Background="Transparent" Tap="MusicPlayPause_Tap" Margin="4,0,4,0">
+                                <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="38" Height="34">
+                                    <Border x:Name="MusicPlayPauseHighlightCollapsed" Width="34" Height="34" CornerRadius="17" Background="#35FFFFFF" Opacity="0" IsHitTestVisible="False" />
                                     <Path x:Name="MusicPlayIconCollapsed"
                                           Data="M32.09,21.634L13.082,33.854C11.967,34.57 10.483,34.248 9.766,33.133C9.517,32.745 9.385,32.295 9.385,31.835L9.385,7.396C9.385,6.071 10.459,4.996 11.785,4.996C12.245,4.996 12.695,5.128 13.082,5.377L32.09,17.597C33.205,18.313 33.528,19.798 32.811,20.913C32.625,21.202 32.38,21.448 32.09,21.634Z"
                                           Fill="#FFFFFE" Stretch="Uniform" Width="16" Height="16" Margin="1,0,0,0"
@@ -243,9 +248,12 @@
                                 </Grid>
                             </Border>
                             <!-- Nút Chuyển bài -->
-                            <Border x:Name="MusicNextBtnCollapsed" Width="32" Height="34" Background="Transparent" Tap="MusicNext_Tap">
-                                <Path Data="M25.971,11.6C25.208,11.6 24.592,12.164 24.592,12.86L24.592,18.866C24.567,18.849 24.552,18.831 24.526,18.816L14.863,12.277C14.577,12.107 14.279,12.02 13.981,12.02C13.317,12.02 12.65,12.487 12.65,13.381L12.65,26.619C12.65,27.513 13.317,27.98 13.981,27.98C14.279,27.98 14.575,27.894 14.863,27.723L24.526,21.183C24.552,21.168 24.567,21.149 24.592,21.134L24.592,27.14C24.592,27.836 25.208,28.4 25.971,28.4C26.732,28.4 27.35,27.836 27.35,27.14L27.35,12.86C27.35,12.164 26.732,11.6 25.971,11.6"
-                                      Fill="#FFFFFE" Stretch="Uniform" Width="14" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Border x:Name="MusicNextBtnCollapsed" Width="34" Height="34" Background="Transparent" Tap="MusicNext_Tap">
+                                <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="34" Height="34">
+                                    <Border x:Name="MusicNextHighlightCollapsed" Width="34" Height="34" CornerRadius="17" Background="#35FFFFFF" Opacity="0" IsHitTestVisible="False" />
+                                    <Path Data="M25.971,11.6C25.208,11.6 24.592,12.164 24.592,12.86L24.592,18.866C24.567,18.849 24.552,18.831 24.526,18.816L14.863,12.277C14.577,12.107 14.279,12.02 13.981,12.02C13.317,12.02 12.65,12.487 12.65,13.381L12.65,26.619C12.65,27.513 13.317,27.98 13.981,27.98C14.279,27.98 14.575,27.894 14.863,27.723L24.526,21.183C24.552,21.168 24.567,21.149 24.592,21.134L24.592,27.14C24.592,27.836 25.208,28.4 25.971,28.4C26.732,28.4 27.35,27.836 27.35,27.14L27.35,12.86C27.35,12.164 26.732,11.6 25.971,11.6"
+                                          Fill="#FFFFFE" Stretch="Uniform" Width="14" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Grid>
                             </Border>
                         </StackPanel>
 
@@ -264,13 +272,16 @@
                                 HorizontalAlignment="Right" VerticalAlignment="Top"
                                 Margin="0,8,8,0" Background="Transparent"
                                 Tap="MusicArrow_Tap">
-                            <Grid Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <Grid.RenderTransform>
-                                    <CompositeTransform x:Name="MusicArrowTransform" CenterX="8" CenterY="8" Rotation="0" />
-                                </Grid.RenderTransform>
-                                <Path x:Name="MusicArrowPath" Data="M 2.5,2.5 L 8,8 L 13.5,2.5" Stroke="#C0FFFFFF" StrokeThickness="2.2"
-                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
-                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Grid Width="32" Height="32" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Border x:Name="MusicArrowHighlight" Width="30" Height="30" CornerRadius="15" Background="#35FFFFFF" Opacity="0" IsHitTestVisible="False" />
+                                <Grid Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Grid.RenderTransform>
+                                        <CompositeTransform x:Name="MusicArrowTransform" CenterX="8" CenterY="8" Rotation="0" />
+                                    </Grid.RenderTransform>
+                                    <Path x:Name="MusicArrowPath" Data="M 2.5,2.5 L 8,8 L 13.5,2.5" Stroke="#C0FFFFFF" StrokeThickness="2.2"
+                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Grid>
                             </Grid>
                         </Border>
 
@@ -289,7 +300,10 @@
                                     
                                     <!-- Track bar container: Chiều cao 34px, cung cấp khoảng trống rộng rãi phía trên cho 2 lớp sóng biển nhô cao mà không bị cắt mép -->
                                     <Grid x:Name="MusicSeekbarContainer" Height="34" Background="Transparent"
-                                          SizeChanged="MusicSeekbarContainer_SizeChanged" Tap="MusicSeekbarContainer_Tap">
+                                          SizeChanged="MusicSeekbarContainer_SizeChanged" Tap="MusicSeekbarContainer_Tap"
+                                          ManipulationStarted="MusicSeekbarContainer_ManipulationStarted"
+                                          ManipulationDelta="MusicSeekbarContainer_ManipulationDelta"
+                                          ManipulationCompleted="MusicSeekbarContainer_ManipulationCompleted">
                                         <!-- Rãnh nền kính mờ chưa phát (Dày 10px từ Y=18 đến Y=28, CornerRadius 5 chuẩn Samsung One UI 6.1) -->
                                         <Border Height="10" CornerRadius="5" Background="#45FFFFFF" BorderBrush="#25FFFFFF" BorderThickness="1"
                                                 VerticalAlignment="Top" Margin="0,18,0,0" HorizontalAlignment="Stretch" />
@@ -310,7 +324,11 @@
                                         </Canvas>
                                         <!-- Nút trượt One UI Thumb tròn xoe 18x18 bo tròn 9, tâm trục khớp tại Y=23 cùng tâm rãnh -->
                                         <Border x:Name="MusicSeekThumb" Width="18" Height="18" CornerRadius="9" Background="#F8E2F1FD"
-                                                VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,14,0,0" />
+                                                VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,14,0,0">
+                                            <Border.RenderTransform>
+                                                <CompositeTransform x:Name="MusicSeekThumbTransform" CenterX="9" CenterY="9" />
+                                            </Border.RenderTransform>
+                                        </Border>
                                     </Grid>
 
                                     <!-- Mốc thời gian phút:giây 2 bên: Căn đều 0px bằng chuẩn xác với 2 đầu thanh seekbar, tăng cỡ chữ lên 12 -->
@@ -332,8 +350,9 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <!-- 1. Nút tùy biến bên trái (Slot 1: Mặc định Yêu thích) -->
-                                    <Border x:Name="MusicLeftActionBtn" Grid.Column="0" Height="34" Background="Transparent" Tap="MusicFavorite_Tap">
-                                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Border x:Name="MusicLeftActionBtn" Grid.Column="0" Height="36" Background="Transparent" Tap="MusicFavorite_Tap">
+                                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="36" Height="36">
+                                            <Border x:Name="MusicLeftActionHighlight" Width="36" Height="36" CornerRadius="18" Background="#35FFFFFF" Opacity="0" IsHitTestVisible="False" />
                                             <Image x:Name="MusicLeftActionImage" Width="18" Height="18" Stretch="Uniform" Visibility="Collapsed" />
                                             <Path x:Name="MusicHeartPath"
                                                   Data="M11.987,8.507C11.987,8.507 11.842,8.729 11.788,8.802C11.262,9.534 9.837,10.809 8.893,11.618C8.378,12.061 7.624,12.061 7.108,11.618C6.164,10.809 4.74,9.533 4.215,8.802C4.162,8.729 4.014,8.507 4.014,8.507C3.792,8.124 3.662,7.671 3.662,7.187C3.662,5.793 4.729,4.662 6.047,4.662C6.856,4.662 7.567,5.088 8.001,5.738C8.431,5.087 9.145,4.662 9.952,4.662C11.271,4.662 12.338,5.793 12.338,7.187C12.341,7.671 12.212,8.124 11.987,8.507Z"
@@ -343,13 +362,17 @@
                                         </Grid>
                                     </Border>
                                     <!-- 2. Lùi bài -->
-                                    <Border x:Name="MusicPrevBtnExpanded" Grid.Column="1" Height="34" Background="Transparent" Tap="MusicPrev_Tap">
-                                        <Path Data="M14.029,11.6C14.792,11.6 15.408,12.164 15.408,12.86L15.408,18.866C15.433,18.849 15.448,18.831 15.474,18.816L25.137,12.277C25.423,12.107 25.721,12.02 26.019,12.02C26.683,12.02 27.35,12.487 27.35,13.381L27.35,26.619C27.35,27.513 26.683,27.98 26.019,27.98C25.721,27.98 25.425,27.894 25.137,27.723L15.474,21.183C15.448,21.168 15.433,21.149 15.408,21.134L15.408,27.14C15.408,27.836 14.792,28.4 14.029,28.4C13.268,28.4 12.65,27.836 12.65,27.14L12.65,12.86C12.65,12.164 13.268,11.6 14.029,11.6"
-                                              Fill="#FFFFFE" Stretch="Uniform" Width="18" Height="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    <Border x:Name="MusicPrevBtnExpanded" Grid.Column="1" Height="36" Background="Transparent" Tap="MusicPrev_Tap">
+                                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="36" Height="36">
+                                            <Border x:Name="MusicPrevHighlightExpanded" Width="36" Height="36" CornerRadius="18" Background="#35FFFFFF" Opacity="0" IsHitTestVisible="False" />
+                                            <Path Data="M14.029,11.6C14.792,11.6 15.408,12.164 15.408,12.86L15.408,18.866C15.433,18.849 15.448,18.831 15.474,18.816L25.137,12.277C25.423,12.107 25.721,12.02 26.019,12.02C26.683,12.02 27.35,12.487 27.35,13.381L27.35,26.619C27.35,27.513 26.683,27.98 26.019,27.98C25.721,27.98 25.425,27.894 25.137,27.723L15.474,21.183C15.448,21.168 15.433,21.149 15.408,21.134L15.408,27.14C15.408,27.836 14.792,28.4 14.029,28.4C13.268,28.4 12.65,27.836 12.65,27.14L12.65,12.86C12.65,12.164 13.268,11.6 14.029,11.6"
+                                                  Fill="#FFFFFE" Stretch="Uniform" Width="18" Height="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Grid>
                                     </Border>
                                     <!-- 3. Play/Pause -->
-                                    <Border x:Name="MusicPlayPauseBtnExpanded" Grid.Column="2" Height="34" Background="Transparent" Tap="MusicPlayPause_Tap">
-                                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Border x:Name="MusicPlayPauseBtnExpanded" Grid.Column="2" Height="42" Background="Transparent" Tap="MusicPlayPause_Tap">
+                                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="42" Height="42">
+                                            <Border x:Name="MusicPlayPauseHighlightExpanded" Width="42" Height="42" CornerRadius="21" Background="#35FFFFFF" Opacity="0" IsHitTestVisible="False" />
                                             <Path x:Name="MusicPlayIconExpanded"
                                                   Data="M32.09,21.634L13.082,33.854C11.967,34.57 10.483,34.248 9.766,33.133C9.517,32.745 9.385,32.295 9.385,31.835L9.385,7.396C9.385,6.071 10.459,4.996 11.785,4.996C12.245,4.996 12.695,5.128 13.082,5.377L32.09,17.597C33.205,18.313 33.528,19.798 32.811,20.913C32.625,21.202 32.38,21.448 32.09,21.634Z"
                                                   Fill="#FFFFFE" Stretch="Uniform" Width="21" Height="21" Margin="2,0,0,0"
@@ -361,13 +384,17 @@
                                         </Grid>
                                     </Border>
                                     <!-- 4. Kế tiếp -->
-                                    <Border x:Name="MusicNextBtnExpanded" Grid.Column="3" Height="34" Background="Transparent" Tap="MusicNext_Tap">
-                                        <Path Data="M25.971,11.6C25.208,11.6 24.592,12.164 24.592,12.86L24.592,18.866C24.567,18.849 24.552,18.831 24.526,18.816L14.863,12.277C14.577,12.107 14.279,12.02 13.981,12.02C13.317,12.02 12.65,12.487 12.65,13.381L12.65,26.619C12.65,27.513 13.317,27.98 13.981,27.98C14.279,27.98 14.575,27.894 14.863,27.723L24.526,21.183C24.552,21.168 24.567,21.149 24.592,21.134L24.592,27.14C24.592,27.836 25.208,28.4 25.971,28.4C26.732,28.4 27.35,27.836 27.35,27.14L27.35,12.86C27.35,12.164 26.732,11.6 25.971,11.6"
-                                              Fill="#FFFFFE" Stretch="Uniform" Width="18" Height="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    <Border x:Name="MusicNextBtnExpanded" Grid.Column="3" Height="36" Background="Transparent" Tap="MusicNext_Tap">
+                                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="36" Height="36">
+                                            <Border x:Name="MusicNextHighlightExpanded" Width="36" Height="36" CornerRadius="18" Background="#35FFFFFF" Opacity="0" IsHitTestVisible="False" />
+                                            <Path Data="M25.971,11.6C25.208,11.6 24.592,12.164 24.592,12.86L24.592,18.866C24.567,18.849 24.552,18.831 24.526,18.816L14.863,12.277C14.577,12.107 14.279,12.02 13.981,12.02C13.317,12.02 12.65,12.487 12.65,13.381L12.65,26.619C12.65,27.513 13.317,27.98 13.981,27.98C14.279,27.98 14.575,27.894 14.863,27.723L24.526,21.183C24.552,21.168 24.567,21.149 24.592,21.134L24.592,27.14C24.592,27.836 25.208,28.4 25.971,28.4C26.732,28.4 27.35,27.836 27.35,27.14L27.35,12.86C27.35,12.164 26.732,11.6 25.971,11.6"
+                                                  Fill="#FFFFFE" Stretch="Uniform" Width="18" Height="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Grid>
                                     </Border>
                                     <!-- 5. Nút tùy biến bên phải (Slot 5: Mặc định Trộn bài) -->
-                                    <Border x:Name="MusicRightActionBtn" Grid.Column="4" Height="34" Background="Transparent" Tap="MusicShuffle_Tap">
-                                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Border x:Name="MusicRightActionBtn" Grid.Column="4" Height="36" Background="Transparent" Tap="MusicShuffle_Tap">
+                                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="36" Height="36">
+                                            <Border x:Name="MusicRightActionHighlight" Width="36" Height="36" CornerRadius="18" Background="#35FFFFFF" Opacity="0" IsHitTestVisible="False" />
                                             <Image x:Name="MusicRightActionImage" Source="/Assets/Icons/ic_music_shuffle.png" Width="18" Height="18" Stretch="Uniform" Visibility="Visible" />
                                             <Path x:Name="MusicRightHeartPath"
                                                   Data="M11.987,8.507C11.987,8.507 11.842,8.729 11.788,8.802C11.262,9.534 9.837,10.809 8.893,11.618C8.378,12.061 7.624,12.061 7.108,11.618C6.164,10.809 4.74,9.533 4.215,8.802C4.162,8.729 4.014,8.507 4.014,8.507C3.792,8.124 3.662,7.671 3.662,7.187C3.662,5.793 4.729,4.662 6.047,4.662C6.856,4.662 7.567,5.088 8.001,5.738C8.431,5.087 9.145,4.662 9.952,4.662C11.271,4.662 12.338,5.793 12.338,7.187C12.341,7.671 12.212,8.124 11.987,8.507Z"
