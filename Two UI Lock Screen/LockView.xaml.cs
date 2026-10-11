@@ -345,12 +345,12 @@ namespace Two_UI_Lock_Screen
 
             element.ManipulationStarted += (s, e) =>
             {
-                AnimateScale(transform, 0.94, 80);
+                try { AnimateScale(transform, 0.94, 80); } catch { }
             };
 
             element.ManipulationCompleted += (s, e) =>
             {
-                AnimateScale(transform, 1.0, 160);
+                try { AnimateScale(transform, 1.0, 160); } catch { }
             };
         }
 
@@ -1075,61 +1075,68 @@ namespace Two_UI_Lock_Screen
         {
             if (!SystemProtection.ScreenLocked) return;
 
-            if (bounceBackStory != null)
+            try
             {
-                try { bounceBackStory.Stop(); } catch { }
-                bounceBackStory = null;
+                if (bounceBackStory != null)
+                {
+                    try { bounceBackStory.Stop(); } catch { }
+                    bounceBackStory = null;
+                }
+                if (slideStory != null)
+                {
+                    try { slideStory.Stop(); } catch { }
+                    slideStory = null;
+                }
+                if (wakeupEntranceStory != null)
+                {
+                    try { wakeupEntranceStory.Stop(); } catch { }
+                    wakeupEntranceStory = null;
+                }
+
+                // Nếu không phải đang mở PIN, đảm bảo các biến đổi và độ mờ ở trạng thái ban đầu
+                if (!isPinPadOpen)
+                {
+                    ForegroundTransform.ScaleX = 1.0;
+                    ForegroundTransform.ScaleY = 1.0;
+                    ForegroundTransform.TranslateX = 0;
+                    ForegroundTransform.TranslateY = 0;
+                    ForegroundPanel.Opacity = 1.0;
+                    BackgroundTransform.TranslateX = 0;
+                    BackgroundTransform.TranslateY = 0;
+                    VideoTransform.TranslateX = 0;
+                    VideoTransform.TranslateY = 0;
+                    if (LockGlyphIcon != null) LockGlyphIcon.Opacity = 0.9;
+                    if (ContactText != null) ContactText.Opacity = 1.0;
+                    if (BottomChargingPanel != null) BottomChargingPanel.Opacity = 1.0;
+                }
+
+                cumulativeDragX = 0;
+                cumulativeDragY = 0;
+
+                double w = LayoutRoot.ActualWidth > 0 ? LayoutRoot.ActualWidth : 480.0;
+                double h = LayoutRoot.ActualHeight > 0 ? LayoutRoot.ActualHeight : 800.0;
+                ForegroundTransform.CenterX = w / 2.0;
+                ForegroundTransform.CenterY = h / 2.0;
+
+                double pinHeight = GetPinpadHeightDips();
+                if (pinHeight > 0)
+                {
+                    isPinLocked = true;
+                    pinpadBoundaryY = -pinHeight;
+                }
+
+                unlockThreshold = 140.0;
+
+                // Khởi động phiên mở khóa với OS Shell nếu đang ở màn hình chính
+                if (!isPinPadOpen && !isUnlockingStarted)
+                {
+                    isUnlockingStarted = true;
+                    try { ExtensibilityApp.BeginUnlock(); } catch { }
+                }
             }
-            if (slideStory != null)
+            catch (Exception ex)
             {
-                try { slideStory.Stop(); } catch { }
-                slideStory = null;
-            }
-            if (wakeupEntranceStory != null)
-            {
-                try { wakeupEntranceStory.Stop(); } catch { }
-                wakeupEntranceStory = null;
-            }
-
-            // Nếu không phải đang mở PIN, đảm bảo các biến đổi và độ mờ ở trạng thái ban đầu
-            if (!isPinPadOpen)
-            {
-                ForegroundTransform.ScaleX = 1.0;
-                ForegroundTransform.ScaleY = 1.0;
-                ForegroundTransform.TranslateX = 0;
-                ForegroundTransform.TranslateY = 0;
-                ForegroundPanel.Opacity = 1.0;
-                BackgroundTransform.TranslateX = 0;
-                BackgroundTransform.TranslateY = 0;
-                VideoTransform.TranslateX = 0;
-                VideoTransform.TranslateY = 0;
-                if (LockGlyphIcon != null) LockGlyphIcon.Opacity = 0.9;
-                if (ContactText != null) ContactText.Opacity = 1.0;
-                if (BottomChargingPanel != null) BottomChargingPanel.Opacity = 1.0;
-            }
-
-            cumulativeDragX = 0;
-            cumulativeDragY = 0;
-
-            double w = LayoutRoot.ActualWidth > 0 ? LayoutRoot.ActualWidth : 480.0;
-            double h = LayoutRoot.ActualHeight > 0 ? LayoutRoot.ActualHeight : 800.0;
-            ForegroundTransform.CenterX = w / 2.0;
-            ForegroundTransform.CenterY = h / 2.0;
-
-            double pinHeight = GetPinpadHeightDips();
-            if (pinHeight > 0)
-            {
-                isPinLocked = true;
-                pinpadBoundaryY = -pinHeight;
-            }
-
-            unlockThreshold = 140.0;
-
-            // Khởi động phiên mở khóa với OS Shell nếu đang ở màn hình chính
-            if (!isPinPadOpen && !isUnlockingStarted)
-            {
-                isUnlockingStarted = true;
-                try { ExtensibilityApp.BeginUnlock(); } catch { }
+                System.Diagnostics.Debug.WriteLine("[LockView] ManipulationStarted error: " + ex.Message);
             }
         }
 
@@ -1137,114 +1144,120 @@ namespace Two_UI_Lock_Screen
         {
             if (!SystemProtection.ScreenLocked) return;
 
-            // 1. Khi bàn phím PIN đang mở: Kéo ảnh nền xuống để đóng PIN Pad
-            if (isPinPadOpen)
+            try
             {
-                double newBgY = BackgroundTransform.TranslateY + e.DeltaManipulation.Translation.Y;
-                if (newBgY > 0) newBgY = 0;
-                if (newBgY < pinpadBoundaryY) newBgY = pinpadBoundaryY;
-                BackgroundTransform.TranslateY = newBgY;
-                VideoTransform.TranslateY = newBgY;
-                return;
-            }
-
-            // 2. Trạng thái bình thường: Vuốt mở khóa
-            if (!isUnlockingStarted)
-            {
-                isUnlockingStarted = true;
-                try { ExtensibilityApp.BeginUnlock(); } catch { }
-            }
-
-            cumulativeDragX += e.DeltaManipulation.Translation.X;
-            cumulativeDragY += e.DeltaManipulation.Translation.Y;
-
-            double distance = Math.Sqrt(cumulativeDragX * cumulativeDragX + cumulativeDragY * cumulativeDragY);
-
-            if (!isPinLocked)
-            {
-                double pinHeight = GetPinpadHeightDips();
-                if (pinHeight > 0)
+                // 1. Khi bàn phím PIN đang mở: Kéo ảnh nền xuống để đóng PIN Pad
+                if (isPinPadOpen)
                 {
-                    isPinLocked = true;
-                    pinpadBoundaryY = -pinHeight;
+                    double newBgY = BackgroundTransform.TranslateY + e.DeltaManipulation.Translation.Y;
+                    if (newBgY > 0) newBgY = 0;
+                    if (newBgY < pinpadBoundaryY) newBgY = pinpadBoundaryY;
+                    BackgroundTransform.TranslateY = newBgY;
+                    VideoTransform.TranslateY = newBgY;
+                    return;
                 }
+
+                // 2. Trạng thái bình thường: Vuốt mở khóa
+                if (!isUnlockingStarted)
+                {
+                    isUnlockingStarted = true;
+                    try { ExtensibilityApp.BeginUnlock(); } catch { }
+                }
+
+                cumulativeDragX += e.DeltaManipulation.Translation.X;
+                cumulativeDragY += e.DeltaManipulation.Translation.Y;
+
+                double distance = Math.Sqrt(cumulativeDragX * cumulativeDragX + cumulativeDragY * cumulativeDragY);
+
+                // Ảnh nền TUYỆT ĐỐI GIỮ NGUYÊN 100% tại Y=0 trong lúc vuốt tay
+                BackgroundTransform.TranslateX = 0;
+                BackgroundTransform.TranslateY = 0;
+                BackgroundTransform.ScaleX = 1.0;
+                BackgroundTransform.ScaleY = 1.0;
+                VideoTransform.TranslateX = 0;
+                VideoTransform.TranslateY = 0;
+                VideoTransform.ScaleX = 1.0;
+                VideoTransform.ScaleY = 1.0;
+
+                // Tiện ích không di chuyển vị trí X/Y
+                ForegroundTransform.TranslateX = 0;
+                ForegroundTransform.TranslateY = 0;
+
+                // Icon ổ khóa và thông tin danh bạ / sạc pin mờ dần trong 30px đầu
+                double quickFade = Math.Max(0.0, 1.0 - (distance / 30.0));
+                if (LockGlyphIcon != null) LockGlyphIcon.Opacity = quickFade * 0.9;
+                if (ContactText != null) ContactText.Opacity = quickFade;
+                if (BottomChargingPanel != null) BottomChargingPanel.Opacity = quickFade;
+
+                // CHỈ phóng to từ tâm và mờ dần toàn bộ tiện ích
+                double progress = Math.Min(1.0, distance / unlockThreshold);
+                double currentScale = 1.0 + (progress * 0.18);
+                ForegroundTransform.ScaleX = currentScale;
+                ForegroundTransform.ScaleY = currentScale;
+                ForegroundPanel.Opacity = Math.Max(0.0, 1.0 - progress);
             }
-
-            // Ảnh nền TUYỆT ĐỐI GIỮ NGUYÊN 100% tại Y=0 trong lúc vuốt tay
-            BackgroundTransform.TranslateX = 0;
-            BackgroundTransform.TranslateY = 0;
-            BackgroundTransform.ScaleX = 1.0;
-            BackgroundTransform.ScaleY = 1.0;
-            VideoTransform.TranslateX = 0;
-            VideoTransform.TranslateY = 0;
-            VideoTransform.ScaleX = 1.0;
-            VideoTransform.ScaleY = 1.0;
-
-            // Tiện ích không di chuyển vị trí X/Y
-            ForegroundTransform.TranslateX = 0;
-            ForegroundTransform.TranslateY = 0;
-
-            // Icon ổ khóa và thông tin danh bạ / sạc pin mờ dần trong 30px đầu
-            double quickFade = Math.Max(0.0, 1.0 - (distance / 30.0));
-            if (LockGlyphIcon != null) LockGlyphIcon.Opacity = quickFade * 0.9;
-            if (ContactText != null) ContactText.Opacity = quickFade;
-            if (BottomChargingPanel != null) BottomChargingPanel.Opacity = quickFade;
-
-            // CHỈ phóng to từ tâm và mờ dần toàn bộ tiện ích
-            double progress = Math.Min(1.0, distance / unlockThreshold);
-            double currentScale = 1.0 + (progress * 0.18);
-            ForegroundTransform.ScaleX = currentScale;
-            ForegroundTransform.ScaleY = currentScale;
-            ForegroundPanel.Opacity = Math.Max(0.0, 1.0 - progress);
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("[LockView] ManipulationDelta error: " + ex.Message);
+            }
         }
 
         private void LayoutRoot_ManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
         {
             if (!SystemProtection.ScreenLocked) return;
 
-            // 1. Nếu bàn phím PIN đang mở và người dùng vừa thao tác kéo để đóng/mở
-            if (isPinPadOpen)
+            try
             {
-                bool isFlickDown = e.FinalVelocities.LinearVelocity.Y > 800.0;
-                bool isFlickUp = e.FinalVelocities.LinearVelocity.Y < -800.0;
-                bool shouldClosePin = (BackgroundTransform.TranslateY > pinpadBoundaryY * 0.5 || isFlickDown) && !isFlickUp;
-
-                if (shouldClosePin)
+                // 1. Nếu bàn phím PIN đang mở và người dùng vừa thao tác kéo để đóng/mở
+                if (isPinPadOpen)
                 {
-                    isPinPadOpen = false;
-                    AnimateBackToNormal();
+                    double newBgY = BackgroundTransform.TranslateY;
+                    bool isFlickDown = e.FinalVelocities.LinearVelocity.Y > 800.0;
+                    bool isFlickUp = e.FinalVelocities.LinearVelocity.Y < -800.0;
+                    bool shouldClosePin = (newBgY > pinpadBoundaryY * 0.5 || isFlickDown) && !isFlickUp;
+
+                    if (shouldClosePin)
+                    {
+                        isPinPadOpen = false;
+                        AnimateBackToNormal();
+                    }
+                    else
+                    {
+                        isPinPadOpen = true;
+                        AnimateWallpaperTo(pinpadBoundaryY, 200);
+                    }
+                    return;
+                }
+
+                // 2. Trạng thái bình thường: Người dùng vừa vuốt mở khóa
+                double distance = Math.Sqrt(cumulativeDragX * cumulativeDragX + cumulativeDragY * cumulativeDragY);
+                double vx = e.FinalVelocities.LinearVelocity.X;
+                double vy = e.FinalVelocities.LinearVelocity.Y;
+                double velocityMag = Math.Sqrt(vx * vx + vy * vy);
+
+                if (!isPinLocked)
+                {
+                    double pinHeight = GetPinpadHeightDips();
+                    if (pinHeight > 0)
+                    {
+                        isPinLocked = true;
+                        pinpadBoundaryY = -pinHeight;
+                    }
+                }
+
+                bool isFlick = (isPinLocked && vy < -700.0) || (velocityMag >= 900.0);
+                if (distance >= unlockThreshold || isFlick)
+                {
+                    InitiateUnlockSequence();
                 }
                 else
                 {
-                    isPinPadOpen = true;
-                    AnimateWallpaperTo(pinpadBoundaryY, 200);
-                }
-                return;
-            }
-
-            // 2. Trạng thái bình thường: Người dùng vừa vuốt mở khóa
-            double distance = Math.Sqrt(cumulativeDragX * cumulativeDragX + cumulativeDragY * cumulativeDragY);
-            double vx = e.FinalVelocities.LinearVelocity.X;
-            double vy = e.FinalVelocities.LinearVelocity.Y;
-            double velocityMag = Math.Sqrt(vx * vx + vy * vy);
-
-            if (!isPinLocked)
-            {
-                double pinHeight = GetPinpadHeightDips();
-                if (pinHeight > 0)
-                {
-                    isPinLocked = true;
-                    pinpadBoundaryY = -pinHeight;
+                    AnimateBackToNormal();
                 }
             }
-
-            bool isFlick = (isPinLocked && vy < -700.0) || (velocityMag >= 900.0);
-            if (distance >= unlockThreshold || isFlick)
+            catch (Exception ex)
             {
-                InitiateUnlockSequence();
-            }
-            else
-            {
+                System.Diagnostics.Debug.WriteLine("[LockView] ManipulationCompleted error: " + ex.Message);
                 AnimateBackToNormal();
             }
         }
@@ -1420,110 +1433,126 @@ namespace Two_UI_Lock_Screen
 
         private void InitiateUnlockSequence()
         {
-            if (bounceBackStory != null) { try { bounceBackStory.Stop(); } catch { } bounceBackStory = null; }
-            if (slideStory != null) { try { slideStory.Stop(); } catch { } slideStory = null; }
-
-            if (!isPinLocked)
+            try
             {
-                double pinHeight = GetPinpadHeightDips();
-                if (pinHeight > 0)
+                if (bounceBackStory != null) { try { bounceBackStory.Stop(); } catch { } bounceBackStory = null; }
+                if (slideStory != null) { try { slideStory.Stop(); } catch { } slideStory = null; }
+
+                if (!isPinLocked)
                 {
-                    isPinLocked = true;
-                    pinpadBoundaryY = -pinHeight;
-                }
-            }
-
-            // Đảm bảo OS Shell chắc chắn đã kích hoạt BeginUnlock()
-            if (!isUnlockingStarted)
-            {
-                isUnlockingStarted = true;
-                try { ExtensibilityApp.BeginUnlock(); } catch { }
-            }
-
-            ForegroundTransform.TranslateX = 0;
-            ForegroundTransform.TranslateY = 0;
-            BackgroundTransform.TranslateX = 0;
-            BackgroundTransform.ScaleX = 1.0;
-            BackgroundTransform.ScaleY = 1.0;
-            VideoTransform.TranslateX = 0;
-            VideoTransform.ScaleX = 1.0;
-            VideoTransform.ScaleY = 1.0;
-
-            // GIAI ĐOẠN 1: Phóng to hết cỡ (1.20) và mờ hoàn toàn tiện ích về 0.0
-            var zoomFadeStory = new Storyboard();
-
-            var scaleXAnim = new DoubleAnimation
-            {
-                To = 1.20,
-                Duration = TimeSpan.FromMilliseconds(160),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            Storyboard.SetTarget(scaleXAnim, ForegroundTransform);
-            Storyboard.SetTargetProperty(scaleXAnim, new PropertyPath("ScaleX"));
-            zoomFadeStory.Children.Add(scaleXAnim);
-
-            var scaleYAnim = new DoubleAnimation
-            {
-                To = 1.20,
-                Duration = TimeSpan.FromMilliseconds(160),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            Storyboard.SetTarget(scaleYAnim, ForegroundTransform);
-            Storyboard.SetTargetProperty(scaleYAnim, new PropertyPath("ScaleY"));
-            zoomFadeStory.Children.Add(scaleYAnim);
-
-            var fadeAnim = new DoubleAnimation
-            {
-                To = 0.0,
-                Duration = TimeSpan.FromMilliseconds(140),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            Storyboard.SetTarget(fadeAnim, ForegroundPanel);
-            Storyboard.SetTargetProperty(fadeAnim, new PropertyPath("Opacity"));
-            zoomFadeStory.Children.Add(fadeAnim);
-
-            // GIAI ĐOẠN 2: CHỈ KHI TIỆN ÍCH ĐÃ PHÓNG TO VÀ MỜ HẾT TOÀN BỘ MỚI TIẾN HÀNH BƯỚC TIẾP THEO
-            zoomFadeStory.Completed += (sZoom, eZoom) =>
-            {
-                ForegroundPanel.Opacity = 0.0;
-                ForegroundTransform.ScaleX = 1.20;
-                ForegroundTransform.ScaleY = 1.20;
-
-                if (isPinLocked)
-                {
-                    // Đảm bảo OS Shell ở trạng thái BeginUnlock() chuẩn xác
-                    try { ExtensibilityApp.BeginUnlock(); } catch { }
-                    isUnlockingStarted = true;
-
-                    // CÓ MÃ PIN: Trượt êm ái ảnh nền lên để lộ bàn phím PIN của OS (Chuẩn HyperOS)
-                    // TUYỆT ĐỐI KHÔNG GỌI RequestScreenUnlock() vì OS đã tự nâng bàn phím PIN qua BeginUnlock()!
-                    // Khi người dùng nhập đúng PIN, OS sẽ tự mở khóa và kết thúc Live Lock Screen.
-                    AnimateWallpaperTo(pinpadBoundaryY, 280, (s, e) =>
+                    double pinHeight = GetPinpadHeightDips();
+                    if (pinHeight > 0)
                     {
-                        isPinPadOpen = true;
-                    });
+                        isPinLocked = true;
+                        pinpadBoundaryY = -pinHeight;
+                    }
                 }
-                else
+
+                // Đảm bảo OS Shell chắc chắn đã kích hoạt BeginUnlock()
+                if (!isUnlockingStarted)
                 {
-                    // KHÔNG CÓ MÃ PIN: Ảnh nền giữ nguyên 100% tại Y=0, mở khóa thẳng vào Start Screen (Chuẩn One UI)
+                    isUnlockingStarted = true;
+                    try { ExtensibilityApp.BeginUnlock(); } catch { }
+                }
+
+                ForegroundTransform.TranslateX = 0;
+                ForegroundTransform.TranslateY = 0;
+                BackgroundTransform.TranslateX = 0;
+                BackgroundTransform.ScaleX = 1.0;
+                BackgroundTransform.ScaleY = 1.0;
+                VideoTransform.TranslateX = 0;
+                VideoTransform.ScaleX = 1.0;
+                VideoTransform.ScaleY = 1.0;
+
+                // GIAI ĐOẠN 1: Phóng to hết cỡ (1.20) và mờ hoàn toàn tiện ích về 0.0
+                var zoomFadeStory = new Storyboard();
+
+                var scaleXAnim = new DoubleAnimation
+                {
+                    To = 1.20,
+                    Duration = TimeSpan.FromMilliseconds(160),
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                };
+                Storyboard.SetTarget(scaleXAnim, ForegroundTransform);
+                Storyboard.SetTargetProperty(scaleXAnim, new PropertyPath("ScaleX"));
+                zoomFadeStory.Children.Add(scaleXAnim);
+
+                var scaleYAnim = new DoubleAnimation
+                {
+                    To = 1.20,
+                    Duration = TimeSpan.FromMilliseconds(160),
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                };
+                Storyboard.SetTarget(scaleYAnim, ForegroundTransform);
+                Storyboard.SetTargetProperty(scaleYAnim, new PropertyPath("ScaleY"));
+                zoomFadeStory.Children.Add(scaleYAnim);
+
+                var fadeAnim = new DoubleAnimation
+                {
+                    To = 0.0,
+                    Duration = TimeSpan.FromMilliseconds(140),
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                };
+                Storyboard.SetTarget(fadeAnim, ForegroundPanel);
+                Storyboard.SetTargetProperty(fadeAnim, new PropertyPath("Opacity"));
+                zoomFadeStory.Children.Add(fadeAnim);
+
+                // GIAI ĐOẠN 2: CHỈ KHI TIỆN ÍCH ĐÃ PHÓNG TO VÀ MỜ HẾT TOÀN BỘ MỚI TIẾN HÀNH BƯỚC TIẾP THEO
+                zoomFadeStory.Completed += (sZoom, eZoom) =>
+                {
                     try
                     {
-                        BackgroundTransform.TranslateY = 0;
-                        VideoTransform.TranslateY = 0;
-                        if (SystemProtection.ScreenLocked)
+                        ForegroundPanel.Opacity = 0.0;
+                        ForegroundTransform.ScaleX = 1.20;
+                        ForegroundTransform.ScaleY = 1.20;
+
+                        if (isPinLocked)
                         {
-                            SystemProtection.RequestScreenUnlock();
+                            // Đảm bảo OS Shell ở trạng thái BeginUnlock() chuẩn xác
+                            try { ExtensibilityApp.BeginUnlock(); } catch { }
+                            isUnlockingStarted = true;
+
+                            // CÓ MÃ PIN: Trượt êm ái ảnh nền lên để lộ bàn phím PIN của OS (Chuẩn HyperOS)
+                            // TUYỆT ĐỐI KHÔNG GỌI RequestScreenUnlock() vì OS đã tự nâng bàn phím PIN qua BeginUnlock()!
+                            // Khi người dùng nhập đúng PIN, OS sẽ tự mở khóa và kết thúc Live Lock Screen.
+                            AnimateWallpaperTo(pinpadBoundaryY, 280, (s, e) =>
+                            {
+                                isPinPadOpen = true;
+                            });
+                        }
+                        else
+                        {
+                            // KHÔNG CÓ MÃ PIN: Ảnh nền giữ nguyên 100% tại Y=0, mở khóa thẳng vào Start Screen (Chuẩn One UI)
+                            try
+                            {
+                                BackgroundTransform.TranslateY = 0;
+                                VideoTransform.TranslateY = 0;
+                                if (SystemProtection.ScreenLocked)
+                                {
+                                    SystemProtection.RequestScreenUnlock();
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine("Unlock error: " + ex.Message);
+                                isUnlockingStarted = false;
+                            }
                         }
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine("Unlock error: " + ex.Message);
+                        System.Diagnostics.Debug.WriteLine("[LockView] zoomFadeStory.Completed error: " + ex.Message);
                         isUnlockingStarted = false;
                     }
-                }
-            };
+                };
 
-            zoomFadeStory.Begin();
+                zoomFadeStory.Begin();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("[LockView] InitiateUnlockSequence error: " + ex.Message);
+                isUnlockingStarted = false;
+            }
         }
 
         #endregion
@@ -2425,6 +2454,14 @@ namespace Two_UI_Lock_Screen
                 _waveTimer.Tick -= WaveTimer_Tick;
                 _waveTimer = null;
             }
+            if (MusicSeekWaveBackPath != null) MusicSeekWaveBackPath.Data = null;
+            if (MusicSeekWaveFrontPath != null) MusicSeekWaveFrontPath.Data = null;
+            if (_waveBackPoints != null) _waveBackPoints.Clear();
+            if (_waveFrontPoints != null) _waveFrontPoints.Clear();
+            _waveBackPoints = null;
+            _waveFrontPoints = null;
+            _waveBackGeometry = null;
+            _waveFrontGeometry = null;
         }
 
         private void OnMusicPlaybackStateChanged()
@@ -2556,49 +2593,106 @@ namespace Two_UI_Lock_Screen
         {
             if (!_isWaveAnimating) return;
 
-            // 1. Cập nhật hệ số biên độ sóng khi chuyển đổi Phát / Tạm dừng (Morphing Animation)
-            if (_isWaveTransitioning)
+            try
             {
-                double elapsed = (DateTime.UtcNow - _waveTransitionStartTime).TotalMilliseconds;
-                double t = Math.Max(0.0, Math.Min(1.0, elapsed / WAVE_TRANSITION_DURATION_MS));
-                // Cubic Ease Out (mềm mại, êm dịu)
-                double ease = 1.0 - Math.Pow(1.0 - t, 3.0);
-                _waveAmplitudeScale = _waveTransitionStartScale + (_targetWaveAmplitudeScale - _waveTransitionStartScale) * ease;
-
-                if (t >= 1.0)
+                // 1. Cập nhật hệ số biên độ sóng khi chuyển đổi Phát / Tạm dừng (Morphing Animation)
+                if (_isWaveTransitioning)
                 {
-                    _waveAmplitudeScale = _targetWaveAmplitudeScale;
-                    _isWaveTransitioning = false;
+                    double elapsed = (DateTime.UtcNow - _waveTransitionStartTime).TotalMilliseconds;
+                    double t = Math.Max(0.0, Math.Min(1.0, elapsed / WAVE_TRANSITION_DURATION_MS));
+                    // Cubic Ease Out (mềm mại, êm dịu)
+                    double ease = 1.0 - Math.Pow(1.0 - t, 3.0);
+                    _waveAmplitudeScale = _waveTransitionStartScale + (_targetWaveAmplitudeScale - _waveTransitionStartScale) * ease;
 
-                    // Khi đã hạ phẳng hoàn toàn về 0 khi tạm dừng:
-                    // Dừng timer để giải phóng 100% CPU, nhưng GIỮ NGUYÊN canvas sóng ở trạng thái phẳng để trọn vẹn màu sắc sóng trước không bị mất
-                    if (_targetWaveAmplitudeScale <= 0.0)
+                    if (t >= 1.0)
                     {
-                        StopWaveAnimation();
-                        UpdateWaveGeometry(_currentPlayedWidth);
-                        return;
+                        _waveAmplitudeScale = _targetWaveAmplitudeScale;
+                        _isWaveTransitioning = false;
+
+                        // Khi đã hạ phẳng hoàn toàn về 0 khi tạm dừng:
+                        // Dừng timer để giải phóng 100% CPU, nhưng GIỮ NGUYÊN canvas sóng ở trạng thái phẳng để trọn vẹn màu sắc sóng trước không bị mất
+                        if (_targetWaveAmplitudeScale <= 0.0)
+                        {
+                            StopWaveAnimation();
+                            UpdateWaveGeometry(_currentPlayedWidth);
+                            return;
+                        }
                     }
                 }
+
+                if (_currentPlayedWidth < 20.0) return;
+
+                // 2. Tốc độ trôi pha: giảm dần nhịp nhàng khi sóng đang hạ phẳng xuống
+                double speedFactor = Math.Max(0.15, _waveAmplitudeScale);
+
+                // Sóng biển nhỏ (ở phía sau): v ≈ 81.6 px/s
+                _wavePhaseSmall += 0.180 * speedFactor;
+                if (_wavePhaseSmall > 6283.185) _wavePhaseSmall -= 6283.185;
+
+                // Sóng biển lớn (ở phía trước): v ≈ 59.3 px/s
+                _wavePhaseLarge += 0.092 * speedFactor;
+                if (_wavePhaseLarge > 6283.185) _wavePhaseLarge -= 6283.185;
+
+                UpdateWaveGeometry(_currentPlayedWidth);
             }
-
-            if (_currentPlayedWidth < 20.0) return;
-
-            // 2. Tốc độ trôi pha: giảm dần nhịp nhàng khi sóng đang hạ phẳng xuống
-            double speedFactor = Math.Max(0.15, _waveAmplitudeScale);
-
-            // Sóng biển nhỏ (ở phía sau): v ≈ 81.6 px/s
-            _wavePhaseSmall += 0.180 * speedFactor;
-            if (_wavePhaseSmall > 6283.185) _wavePhaseSmall -= 6283.185;
-
-            // Sóng biển lớn (ở phía trước): v ≈ 59.3 px/s
-            _wavePhaseLarge += 0.092 * speedFactor;
-            if (_wavePhaseLarge > 6283.185) _wavePhaseLarge -= 6283.185;
-
-            UpdateWaveGeometry(_currentPlayedWidth);
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("[LockView] WaveTimer_Tick error: " + ex.Message);
+            }
         }
 
-        private PathGeometry BuildWaveGeometry(double W, double hMax, double wavelength, double phase, double power)
+        private PathGeometry _waveBackGeometry = null;
+        private PointCollection _waveBackPoints = null;
+        private PathGeometry _waveFrontGeometry = null;
+        private PointCollection _waveFrontPoints = null;
+
+        private void EnsureWaveGeometries()
         {
+            if (_waveBackGeometry == null)
+            {
+                _waveBackPoints = new PointCollection();
+                var seg = new PolyLineSegment { Points = _waveBackPoints };
+                var fig = new PathFigure
+                {
+                    IsClosed = true,
+                    IsFilled = true,
+                    StartPoint = new Point(5.0, 28.0)
+                };
+                fig.Segments.Add(seg);
+                _waveBackGeometry = new PathGeometry();
+                _waveBackGeometry.Figures.Add(fig);
+            }
+
+            if (_waveFrontGeometry == null)
+            {
+                _waveFrontPoints = new PointCollection();
+                var seg = new PolyLineSegment { Points = _waveFrontPoints };
+                var fig = new PathFigure
+                {
+                    IsClosed = true,
+                    IsFilled = true,
+                    StartPoint = new Point(5.0, 28.0)
+                };
+                fig.Segments.Add(seg);
+                _waveFrontGeometry = new PathGeometry();
+                _waveFrontGeometry.Figures.Add(fig);
+            }
+
+            if (MusicSeekWaveBackPath != null && MusicSeekWaveBackPath.Data != _waveBackGeometry)
+            {
+                MusicSeekWaveBackPath.Data = _waveBackGeometry;
+            }
+            if (MusicSeekWaveFrontPath != null && MusicSeekWaveFrontPath.Data != _waveFrontGeometry)
+            {
+                MusicSeekWaveFrontPath.Data = _waveFrontGeometry;
+            }
+        }
+
+        private void UpdateSingleWaveGeometry(PointCollection points, double W, double hMax, double wavelength, double phase, double power)
+        {
+            if (points == null) return;
+            points.Clear();
+
             double yBaseTop = 18.0;
             double yBottom = 28.0;
             double twoPiOverLambda = 6.283185307179586 / wavelength;
@@ -2608,26 +2702,17 @@ namespace Two_UI_Lock_Screen
             // Khoảng cách bắt đầu nổi lên xa dần theo thời gian/độ dài seek (~24% chiều dài, tối thiểu 20px)
             double taperLen = Math.Max(20.0, spanW * 0.24);
 
-            var figure = new PathFigure
-            {
-                IsClosed = true,
-                IsFilled = true,
-                StartPoint = new Point(5.0, yBottom)
-            };
-
-            // 1. Cung tròn bán kính R=5 bo tròn mép trái hoàn hảo từ (5.0, 28.0) qua (0.0, 23.0) đến (5.0, 18.0)
-            var leftArc = new ArcSegment
-            {
-                Point = new Point(5.0, yBaseTop),
-                Size = new Size(5.0, 5.0),
-                SweepDirection = SweepDirection.Clockwise,
-                IsLargeArc = false
-            };
-            figure.Segments.Add(leftArc);
+            // 1. Cung tròn mép trái R=5px (từ Y=28 qua X=0, Y=23 đến Y=18)
+            // Hoàn toàn mượt mà, không phụ thuộc ArcSegment, triệt tiêu 100% lỗi Direct2D/NaN
+            points.Add(new Point(2.50, 27.33));
+            points.Add(new Point(0.67, 25.50));
+            points.Add(new Point(0.00, 23.00));
+            points.Add(new Point(0.67, 20.50));
+            points.Add(new Point(2.50, 18.67));
+            points.Add(new Point(5.00, 18.00));
 
             // 2. Các điểm gợn sóng từ x = 5.0 đến x = W
-            var points = new PointCollection();
-            for (int i = 0; i <= WAVE_POINTS_COUNT; i++)
+            for (int i = 1; i <= WAVE_POINTS_COUNT; i++)
             {
                 double u = (double)i / WAVE_POINTS_COUNT;
                 double x = 5.0 + u * spanW;
@@ -2650,34 +2735,31 @@ namespace Two_UI_Lock_Screen
 
             // Điểm khép góc phải dưới tại nút seek thumb (W, yBottom)
             points.Add(new Point(W, yBottom));
-            // Điểm khép góc trái dưới đáy (5.0, yBottom) nối liền vào StartPoint của cung tròn
+            // Điểm khép góc trái dưới đáy (5.0, yBottom) nối liền vào StartPoint (5.0, 28.0)
             points.Add(new Point(5.0, yBottom));
-
-            figure.Segments.Add(new PolyLineSegment { Points = points });
-
-            var geom = new PathGeometry();
-            geom.Figures.Add(figure);
-            return geom;
         }
 
         private void UpdateWaveGeometry(double playedWidth)
         {
-            if (MusicSeekWaveFrontPath == null && MusicSeekWaveBackPath == null) return;
-            double W = playedWidth;
-            if (W < 20.0) return;
-
-            // 1. Sóng biển lớn (ở phía sau): sóng lớn hơn (11.5px), bước sóng dài hơn (135px), trôi chậm hơn (v ≈ 59.3 px/s), màu nền sáng nguyên khối
-            double hLarge = 11.5 * Math.Min(1.0, W / 60.0) * _waveAmplitudeScale;
-            if (MusicSeekWaveBackPath != null)
+            try
             {
-                MusicSeekWaveBackPath.Data = BuildWaveGeometry(W, hLarge, 135.0, _wavePhaseLarge, 1.6);
+                if (MusicSeekWaveFrontPath == null && MusicSeekWaveBackPath == null) return;
+                double W = playedWidth;
+                if (W < 20.0) return;
+
+                EnsureWaveGeometries();
+
+                // 1. Sóng biển lớn (ở phía sau): sóng lớn hơn (11.5px), bước sóng dài hơn (135px), trôi chậm hơn (v ≈ 59.3 px/s), màu nền sáng nguyên khối
+                double hLarge = 11.5 * Math.Min(1.0, W / 60.0) * _waveAmplitudeScale;
+                UpdateSingleWaveGeometry(_waveBackPoints, W, hLarge, 135.0, _wavePhaseLarge, 1.6);
+
+                // 2. Sóng biển nhỏ (ở phía trước): sóng nhỏ hơn (7.5px), bước sóng ngắn hơn (95px), trôi nhanh hơn (v ≈ 81.6 px/s), bán trong suốt tinh tế
+                double hSmall = 7.5 * Math.Min(1.0, W / 50.0) * _waveAmplitudeScale;
+                UpdateSingleWaveGeometry(_waveFrontPoints, W, hSmall, 95.0, _wavePhaseSmall, 1.6);
             }
-
-            // 2. Sóng biển nhỏ (ở phía trước): sóng nhỏ hơn (7.5px), bước sóng ngắn hơn (95px), trôi nhanh hơn (v ≈ 81.6 px/s), bán trong suốt tinh tế
-            double hSmall = 7.5 * Math.Min(1.0, W / 50.0) * _waveAmplitudeScale;
-            if (MusicSeekWaveFrontPath != null)
+            catch (Exception ex)
             {
-                MusicSeekWaveFrontPath.Data = BuildWaveGeometry(W, hSmall, 95.0, _wavePhaseSmall, 1.6);
+                System.Diagnostics.Debug.WriteLine("[LockView] UpdateWaveGeometry error: " + ex.Message);
             }
         }
 
