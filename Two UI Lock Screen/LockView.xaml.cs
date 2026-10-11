@@ -59,9 +59,6 @@ namespace Two_UI_Lock_Screen
         private bool _isRightShortcutActive = false;
         private bool _hasShortcutVibrated = false;
         private const double ShortcutUnlockThreshold = 240.0;
-        private bool _isUnlockGestureActive = false;
-        private bool _isSeeking = false;
-        private double _currentSeekX = 0.0;
 
         public LockView()
         {
@@ -95,8 +92,6 @@ namespace Two_UI_Lock_Screen
                 isPinPadOpen = false;
                 isPinLocked = false;
                 pinpadBoundaryY = 0.0;
-                _isUnlockGestureActive = false;
-                _isSeeking = false;
                 if (bounceBackStory != null)
                 {
                     try { bounceBackStory.Stop(); } catch { }
@@ -340,63 +335,29 @@ namespace Two_UI_Lock_Screen
             AttachPressEffect(UvTileBorder);
             AttachPressEffect(WeatherTileBorder);
 
-            // Vòng tròn nổi bật bán trong suốt chuẩn Android One UI 6.1 khi chạm/nhấn vào các nút trong widget
-            SetupButtonPressEffect(MusicPrevBtnCollapsed, MusicPrevHighlightCollapsed);
-            SetupButtonPressEffect(MusicPlayPauseBtnCollapsed, MusicPlayPauseHighlightCollapsed);
-            SetupButtonPressEffect(MusicNextBtnCollapsed, MusicNextHighlightCollapsed);
-            SetupButtonPressEffect(MusicArrowBtn, MusicArrowHighlight);
+            // Các nút tiện ích âm nhạc One UI 6.1 (Hiệu ứng nổi bật / Ripple Highlight tròn như Android)
+            AttachButtonHighlightEffect(MusicArrowBtn);
+            AttachButtonHighlightEffect(MusicPrevBtnCollapsed);
+            AttachButtonHighlightEffect(MusicPlayPauseBtnCollapsed);
+            AttachButtonHighlightEffect(MusicNextBtnCollapsed);
 
-            SetupButtonPressEffect(MusicLeftActionBtn, MusicLeftActionHighlight);
-            SetupButtonPressEffect(MusicPrevBtnExpanded, MusicPrevHighlightExpanded);
-            SetupButtonPressEffect(MusicPlayPauseBtnExpanded, MusicPlayPauseHighlightExpanded);
-            SetupButtonPressEffect(MusicNextBtnExpanded, MusicNextHighlightExpanded);
-            SetupButtonPressEffect(MusicRightActionBtn, MusicRightActionHighlight);
-        }
-
-        private void SetupButtonPressEffect(FrameworkElement btn, UIElement highlight)
-        {
-            if (btn == null || highlight == null) return;
-
-            btn.MouseLeftButtonDown += (s, e) =>
-            {
-                AnimateHighlight(highlight, 1.0, 50);
-            };
-
-            btn.MouseLeftButtonUp += (s, e) =>
-            {
-                AnimateHighlight(highlight, 0.0, 180);
-            };
-
-            btn.MouseLeave += (s, e) =>
-            {
-                AnimateHighlight(highlight, 0.0, 150);
-            };
-        }
-
-        private void AnimateHighlight(UIElement target, double toOpacity, double durationMs)
-        {
-            if (target == null) return;
-            try
-            {
-                var anim = new DoubleAnimation
-                {
-                    To = toOpacity,
-                    Duration = TimeSpan.FromMilliseconds(durationMs),
-                    EasingFunction = new CubicEase { EasingMode = toOpacity > 0 ? EasingMode.EaseOut : EasingMode.EaseIn }
-                };
-                var sb = new Storyboard();
-                Storyboard.SetTarget(anim, target);
-                Storyboard.SetTargetProperty(anim, new PropertyPath("Opacity"));
-                sb.Begin();
-            }
-            catch { }
+            AttachButtonHighlightEffect(MusicLeftActionBtn);
+            AttachButtonHighlightEffect(MusicPrevBtnExpanded);
+            AttachButtonHighlightEffect(MusicPlayPauseBtnExpanded);
+            AttachButtonHighlightEffect(MusicNextBtnExpanded);
+            AttachButtonHighlightEffect(MusicRightActionBtn);
         }
 
         private void AttachPressEffect(FrameworkElement element)
         {
             if (element == null) return;
             var transform = element.RenderTransform as CompositeTransform;
-            if (transform == null) return;
+            if (transform == null)
+            {
+                transform = new CompositeTransform();
+                element.RenderTransform = transform;
+                element.RenderTransformOrigin = new Point(0.5, 0.5);
+            }
 
             element.ManipulationStarted += (s, e) =>
             {
@@ -407,6 +368,70 @@ namespace Two_UI_Lock_Screen
             {
                 try { AnimateScale(transform, 1.0, 160); } catch { }
             };
+        }
+
+        private void AttachButtonHighlightEffect(Border border)
+        {
+            if (border == null) return;
+
+            var transform = border.RenderTransform as CompositeTransform;
+            if (transform == null)
+            {
+                transform = new CompositeTransform();
+                border.RenderTransform = transform;
+                border.RenderTransformOrigin = new Point(0.5, 0.5);
+            }
+
+            border.ManipulationStarted += (s, e) =>
+            {
+                try
+                {
+                    AnimateScale(transform, 0.90, 70);
+                    border.Background = new SolidColorBrush(Color.FromArgb(0x35, 0xFF, 0xFF, 0xFE));
+                }
+                catch { }
+            };
+
+            border.ManipulationCompleted += (s, e) =>
+            {
+                try
+                {
+                    AnimateScale(transform, 1.0, 160);
+                    AnimateBorderBackgroundFadeOut(border);
+                }
+                catch { }
+            };
+        }
+
+        private void AnimateBorderBackgroundFadeOut(Border border)
+        {
+            if (border == null) return;
+            var brush = border.Background as SolidColorBrush;
+            if (brush == null)
+            {
+                border.Background = new SolidColorBrush(Colors.Transparent);
+                return;
+            }
+
+            var animBrush = new SolidColorBrush(brush.Color);
+            border.Background = animBrush;
+
+            var anim = new ColorAnimation
+            {
+                To = Color.FromArgb(0x00, 0xFF, 0xFF, 0xFE),
+                Duration = TimeSpan.FromMilliseconds(180),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            Storyboard.SetTarget(anim, animBrush);
+            Storyboard.SetTargetProperty(anim, new PropertyPath("Color"));
+
+            var sb = new Storyboard();
+            sb.Children.Add(anim);
+            sb.Completed += (s, e) =>
+            {
+                try { border.Background = new SolidColorBrush(Colors.Transparent); } catch { }
+            };
+            sb.Begin();
         }
 
         private void AnimateScale(CompositeTransform transform, double toScale, double durationMs)
@@ -1121,50 +1146,60 @@ namespace Two_UI_Lock_Screen
             }
         }
 
+        private bool _isUnlockGestureIgnored = false;
+
+        private bool IsTouchInsideElement(object originalSource, FrameworkElement targetContainer)
+        {
+            if (targetContainer == null || targetContainer.Visibility != Visibility.Visible) return false;
+            var dep = originalSource as DependencyObject;
+            while (dep != null)
+            {
+                if (dep == targetContainer) return true;
+                dep = VisualTreeHelper.GetParent(dep);
+            }
+            return false;
+        }
+
+        private bool IsPointInsideElement(Point pointOnLayoutRoot, FrameworkElement targetElement)
+        {
+            if (targetElement == null || targetElement.Visibility != Visibility.Visible || LayoutRoot == null) return false;
+            try
+            {
+                var transform = targetElement.TransformToVisual(LayoutRoot);
+                Point topLeft = transform.Transform(new Point(0, 0));
+                double w = targetElement.ActualWidth;
+                double h = targetElement.ActualHeight;
+                if (w <= 0 || h <= 0) return false;
+                Rect bounds = new Rect(topLeft.X, topLeft.Y, w, h);
+                return bounds.Contains(pointOnLayoutRoot);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private void MusicWidgetCard_ManipulationDelta(object sender, ManipulationDeltaEventArgs e)
+        {
+            e.Handled = true;
+        }
+
         private void LayoutRoot_ManipulationStarted(object sender, ManipulationStartedEventArgs e)
         {
             if (!SystemProtection.ScreenLocked) return;
 
+            // Ngăn chặn cử chỉ mở khóa khi chạm/vuốt bên trong tiện ích âm nhạc hoặc các widget khác
+            if (IsTouchInsideElement(e.OriginalSource, MusicWidgetCard) ||
+                IsTouchInsideElement(e.OriginalSource, WidgetsPillBar) ||
+                IsPointInsideElement(e.ManipulationOrigin, MusicWidgetCard))
+            {
+                _isUnlockGestureIgnored = true;
+                return;
+            }
+            _isUnlockGestureIgnored = false;
+
             try
             {
-                // 1. Phím tắt góc dưới đang kéo -> bỏ qua
-                if (_isShortcutDragging)
-                {
-                    _isUnlockGestureActive = false;
-                    return;
-                }
-
-                // 2. Nếu điểm chạm nằm trong vùng Tiện ích Âm nhạc (MusicWidgetCard), tuyệt đối không kích hoạt mở khóa
-                if (MusicWidgetCard != null && MusicWidgetCard.Visibility == Visibility.Visible)
-                {
-                    try
-                    {
-                        GeneralTransform gt = MusicWidgetCard.TransformToVisual(LayoutRoot);
-                        Point cardTopLeft = gt.Transform(new Point(0, 0));
-                        Rect cardRect = new Rect(cardTopLeft.X - 4.0, cardTopLeft.Y - 4.0, MusicWidgetCard.ActualWidth + 8.0, MusicWidgetCard.ActualHeight + 8.0);
-                        if (cardRect.Contains(e.ManipulationOrigin))
-                        {
-                            _isUnlockGestureActive = false;
-                            return;
-                        }
-                    }
-                    catch { }
-                }
-
-                // 3. Nếu điểm chạm nằm trong vùng 2 phím tắt ở 2 góc dưới (Flashlight & Camera)
-                double screenW = LayoutRoot.ActualWidth > 0 ? LayoutRoot.ActualWidth : 480.0;
-                double screenH = LayoutRoot.ActualHeight > 0 ? LayoutRoot.ActualHeight : 800.0;
-                if (e.ManipulationOrigin.Y >= screenH - 90.0)
-                {
-                    if (e.ManipulationOrigin.X <= 90.0 || e.ManipulationOrigin.X >= screenW - 90.0)
-                    {
-                        _isUnlockGestureActive = false;
-                        return;
-                    }
-                }
-
-                _isUnlockGestureActive = true;
-
                 if (bounceBackStory != null)
                 {
                     try { bounceBackStory.Stop(); } catch { }
@@ -1224,7 +1259,7 @@ namespace Two_UI_Lock_Screen
         private void LayoutRoot_ManipulationDelta(object sender, ManipulationDeltaEventArgs e)
         {
             if (!SystemProtection.ScreenLocked) return;
-            if (!_isUnlockGestureActive) return;
+            if (_isUnlockGestureIgnored) return;
 
             try
             {
@@ -1289,8 +1324,11 @@ namespace Two_UI_Lock_Screen
         private void LayoutRoot_ManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
         {
             if (!SystemProtection.ScreenLocked) return;
-            if (!_isUnlockGestureActive) return;
-            _isUnlockGestureActive = false;
+            if (_isUnlockGestureIgnored)
+            {
+                _isUnlockGestureIgnored = false;
+                return;
+            }
 
             try
             {
@@ -1350,7 +1388,6 @@ namespace Two_UI_Lock_Screen
 
         private void AnimateBackToNormal()
         {
-            _isUnlockGestureActive = false;
             // Chỉ gửi tín hiệu hạ PIN về OS nếu trước đó đã thực sự phát tín hiệu BeginUnlock()
             if (isUnlockingStarted)
             {
@@ -3173,7 +3210,6 @@ namespace Two_UI_Lock_Screen
 
         private void OnMusicPositionTick(long positionMs, long durationMs)
         {
-            if (_isSeeking) return;
             MusicCurrentTimeText.Text = FormatMs(positionMs);
             if (durationMs > 0)
             {
@@ -3182,9 +3218,13 @@ namespace Two_UI_Lock_Screen
             }
         }
 
+        private bool _isDraggingSeekbar = false;
+        private long _dragSeekTargetMs = 0;
+
         private void UpdateSeekbar(long positionMs, long durationMs)
         {
             if (durationMs <= 0 || MusicSeekbarContainer == null) return;
+            if (_isDraggingSeekbar) return; // Người dùng đang kéo tua: giữ nguyên vị trí ngón tay, không bị ghi đè
             double totalWidth = MusicSeekbarContainer.ActualWidth > 0 ? MusicSeekbarContainer.ActualWidth : 400.0;
 
             // 1. Cập nhật thanh tải đệm (Buffer Progress) chuẩn AOSP PlaybackState.getBufferedPosition
@@ -3760,99 +3800,98 @@ namespace Two_UI_Lock_Screen
             UpdateSeekbar(svc.PositionMs, svc.DurationMs);
         }
 
-        private void MusicSeekbarContainer_ManipulationStarted(object sender, ManipulationStartedEventArgs e)
-        {
-            e.Handled = true;
-            var svc = MusicWidgetService.Instance;
-            if (!svc.CanSeek || svc.DurationMs <= 0 || MusicSeekbarContainer == null) return;
-
-            _isSeeking = true;
-            _currentSeekX = e.ManipulationOrigin.X;
-            UpdateSeekUiFromTouchX(_currentSeekX);
-
-            if (MusicSeekThumbTransform != null)
-            {
-                AnimateScale(MusicSeekThumbTransform, 1.25, 100);
-            }
-        }
-
-        private void MusicSeekbarContainer_ManipulationDelta(object sender, ManipulationDeltaEventArgs e)
-        {
-            e.Handled = true;
-            if (!_isSeeking || MusicSeekbarContainer == null) return;
-
-            _currentSeekX += e.DeltaManipulation.Translation.X;
-            UpdateSeekUiFromTouchX(_currentSeekX);
-        }
-
-        private async void MusicSeekbarContainer_ManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
-        {
-            e.Handled = true;
-            if (!_isSeeking) return;
-
-            if (MusicSeekThumbTransform != null)
-            {
-                AnimateScale(MusicSeekThumbTransform, 1.0, 150);
-            }
-
-            var svc = MusicWidgetService.Instance;
-            if (svc.CanSeek && svc.DurationMs > 0 && MusicSeekbarContainer != null)
-            {
-                double totalWidth = MusicSeekbarContainer.ActualWidth > 0 ? MusicSeekbarContainer.ActualWidth : 400.0;
-                double ratio = Math.Max(0.0, Math.Min(1.0, _currentSeekX / totalWidth));
-                long seekPos = (long)(ratio * svc.DurationMs);
-                try
-                {
-                    await svc.SendSeekAsync(seekPos);
-                }
-                catch { }
-            }
-
-            _isSeeking = false;
-        }
-
-        private void UpdateSeekUiFromTouchX(double touchX)
-        {
-            var svc = MusicWidgetService.Instance;
-            if (svc.DurationMs <= 0 || MusicSeekbarContainer == null) return;
-
-            double totalWidth = MusicSeekbarContainer.ActualWidth > 0 ? MusicSeekbarContainer.ActualWidth : 400.0;
-            double clampedX = Math.Max(0.0, Math.Min(totalWidth, touchX));
-            _currentSeekX = clampedX;
-            double ratio = clampedX / totalWidth;
-
-            double playedWidth = clampedX;
-            if (MusicSeekPlayedTrack != null) MusicSeekPlayedTrack.Width = playedWidth;
-
-            UpdateWaveProgress(playedWidth, svc.IsPlaying);
-
-            double thumbX = Math.Max(0.0, Math.Min(totalWidth - 18.0, playedWidth - 9.0));
-            if (MusicSeekThumb != null)
-            {
-                MusicSeekThumb.Margin = new Thickness(thumbX, 14, 0, 0);
-            }
-
-            long estimatedMs = (long)(ratio * svc.DurationMs);
-            MusicCurrentTimeText.Text = FormatMs(estimatedMs);
-        }
-
         private async void MusicSeekbarContainer_Tap(object sender, System.Windows.Input.GestureEventArgs e)
         {
             e.Handled = true;
-            if (_isSeeking) return;
             var svc = MusicWidgetService.Instance;
             if (!svc.CanSeek || svc.DurationMs <= 0 || MusicSeekbarContainer == null) return;
             Point p = e.GetPosition(MusicSeekbarContainer);
-            UpdateSeekUiFromTouchX(p.X);
             double totalWidth = MusicSeekbarContainer.ActualWidth > 0 ? MusicSeekbarContainer.ActualWidth : 400.0;
             double ratio = Math.Max(0.0, Math.Min(1.0, p.X / totalWidth));
             long seekPos = (long)(ratio * svc.DurationMs);
             await svc.SendSeekAsync(seekPos);
         }
 
-        private void MusicWidgetCard_ManipulationDelta(object sender, ManipulationDeltaEventArgs e)
+        private double _seekDragStartOriginX = 0;
+
+        private void MusicSeekbarContainer_ManipulationStarted(object sender, ManipulationStartedEventArgs e)
         {
             e.Handled = true;
+            var svc = MusicWidgetService.Instance;
+            if (!svc.CanSeek || svc.DurationMs <= 0 || MusicSeekbarContainer == null) return;
+
+            _isDraggingSeekbar = true;
+            _seekDragStartOriginX = e.ManipulationOrigin.X;
+
+            // Khi người dùng chạm kéo: tạm dừng hoạt ảnh sóng và chuyển sang hiển thị rãnh phẳng trong suốt thời gian kéo
+            StopWaveAnimation();
+            if (MusicSeekWaveCanvas != null) MusicSeekWaveCanvas.Visibility = Visibility.Collapsed;
+            if (MusicSeekPlayedTrack != null) MusicSeekPlayedTrack.Visibility = Visibility.Visible;
+
+            UpdateSeekDragVisual(_seekDragStartOriginX);
+        }
+
+        private void MusicSeekbarContainer_ManipulationDelta(object sender, ManipulationDeltaEventArgs e)
+        {
+            e.Handled = true;
+            if (!_isDraggingSeekbar || MusicSeekbarContainer == null) return;
+
+            double currentX = _seekDragStartOriginX + e.CumulativeManipulation.Translation.X;
+            UpdateSeekDragVisual(currentX);
+        }
+
+        private async void MusicSeekbarContainer_ManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
+        {
+            e.Handled = true;
+            if (!_isDraggingSeekbar) return;
+
+            _isDraggingSeekbar = false;
+            var svc = MusicWidgetService.Instance;
+
+            long finalPos = _dragSeekTargetMs;
+            if (svc.CanSeek && svc.DurationMs > 0)
+            {
+                await svc.SendSeekAsync(finalPos);
+            }
+
+            // Sau khi thả tay: khôi phục hoạt ảnh sóng nếu đang phát nhạc
+            double totalWidth = MusicSeekbarContainer.ActualWidth > 0 ? MusicSeekbarContainer.ActualWidth : 400.0;
+            double ratio = (svc.DurationMs > 0) ? Math.Max(0.0, Math.Min(1.0, (double)finalPos / svc.DurationMs)) : 0.0;
+            double playedWidth = ratio * totalWidth;
+            UpdateWaveProgress(playedWidth, svc.IsPlaying);
+        }
+
+        private void UpdateSeekDragVisual(double touchX)
+        {
+            var svc = MusicWidgetService.Instance;
+            if (MusicSeekbarContainer == null || svc.DurationMs <= 0) return;
+
+            double totalWidth = MusicSeekbarContainer.ActualWidth > 0 ? MusicSeekbarContainer.ActualWidth : 400.0;
+            double ratio = Math.Max(0.0, Math.Min(1.0, touchX / totalWidth));
+            long seekPos = (long)(ratio * svc.DurationMs);
+            _dragSeekTargetMs = seekPos;
+
+            double playedWidth = ratio * totalWidth;
+            if (MusicSeekPlayedTrack != null)
+            {
+                MusicSeekPlayedTrack.Width = playedWidth;
+                MusicSeekPlayedTrack.Visibility = Visibility.Visible;
+            }
+            if (MusicSeekWaveCanvas != null)
+            {
+                MusicSeekWaveCanvas.Visibility = Visibility.Collapsed;
+            }
+
+            if (MusicSeekThumb != null)
+            {
+                double thumbX = Math.Max(0.0, Math.Min(totalWidth - 18.0, playedWidth - 9.0));
+                MusicSeekThumb.Margin = new Thickness(thumbX, 14, 0, 0);
+            }
+
+            if (MusicCurrentTimeText != null)
+            {
+                MusicCurrentTimeText.Text = FormatMs(seekPos);
+            }
         }
 
         private string _currentAppIconKey = null;
@@ -4113,25 +4152,22 @@ namespace Two_UI_Lock_Screen
                 MusicSeekbarContainer.Opacity = svc.CanSeek ? 1.0 : 0.45;
             }
 
-            if (!_isSeeking)
+            long currentEst = svc.CurrentEstimatedPositionMs;
+            MusicCurrentTimeText.Text = FormatMs(currentEst);
+            if (svc.DurationMs > 0)
             {
-                long currentEst = svc.CurrentEstimatedPositionMs;
-                MusicCurrentTimeText.Text = FormatMs(currentEst);
-                if (svc.DurationMs > 0)
-                {
-                    MusicTotalTimeText.Text = FormatMs(svc.DurationMs);
-                    UpdateSeekbar(currentEst, svc.DurationMs);
-                    if (MusicSeekThumb != null) MusicSeekThumb.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    MusicTotalTimeText.Text = "Trực tiếp";
-                    if (MusicSeekPlayedTrack != null) MusicSeekPlayedTrack.Width = 0;
-                    if (MusicSeekBufferedTrack != null) MusicSeekBufferedTrack.Width = 0;
-                    if (MusicSeekWaveCanvas != null) MusicSeekWaveCanvas.Visibility = Visibility.Collapsed;
-                    StopWaveAnimation();
-                    if (MusicSeekThumb != null) MusicSeekThumb.Visibility = Visibility.Collapsed;
-                }
+                MusicTotalTimeText.Text = FormatMs(svc.DurationMs);
+                UpdateSeekbar(currentEst, svc.DurationMs);
+                if (MusicSeekThumb != null) MusicSeekThumb.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                MusicTotalTimeText.Text = "Trực tiếp";
+                if (MusicSeekPlayedTrack != null) MusicSeekPlayedTrack.Width = 0;
+                if (MusicSeekBufferedTrack != null) MusicSeekBufferedTrack.Width = 0;
+                if (MusicSeekWaveCanvas != null) MusicSeekWaveCanvas.Visibility = Visibility.Collapsed;
+                StopWaveAnimation();
+                if (MusicSeekThumb != null) MusicSeekThumb.Visibility = Visibility.Collapsed;
             }
 
             // Tải ảnh bìa album (Căn giữa chuẩn xác cả ảnh 16:9 và 1:1)
