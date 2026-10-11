@@ -316,7 +316,11 @@
                                         </Canvas>
                                         <!-- Nút trượt One UI Thumb tròn xoe 18x18 bo tròn 9, tâm trục khớp tại Y=23 cùng tâm rãnh -->
                                         <Border x:Name="MusicSeekThumb" IsHitTestVisible="False" Width="18" Height="18" CornerRadius="9" Background="#F8E2F1FD"
-                                                VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,14,0,0" />
+                                                VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,14,0,0">
+                                            <Border.RenderTransform>
+                                                <CompositeTransform x:Name="MusicSeekThumbTransform" />
+                                            </Border.RenderTransform>
+                                        </Border>
                                     </Grid>
 
                                     <!-- Mốc thời gian phút:giây 2 bên: Căn đều 0px bằng chuẩn xác với 2 đầu thanh seekbar, tăng cỡ chữ lên 12 -->

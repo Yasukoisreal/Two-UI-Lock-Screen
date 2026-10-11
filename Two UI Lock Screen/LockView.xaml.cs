@@ -3240,7 +3240,14 @@ namespace Two_UI_Lock_Screen
             UpdateWaveProgress(playedWidth, svc.IsPlaying);
 
             double thumbX = Math.Max(0.0, Math.Min(totalWidth - 18.0, playedWidth - 9.0));
-            MusicSeekThumb.Margin = new Thickness(thumbX, 14, 0, 0);
+            if (MusicSeekThumbTransform != null)
+            {
+                MusicSeekThumbTransform.TranslateX = thumbX;
+            }
+            else if (MusicSeekThumb != null)
+            {
+                MusicSeekThumb.Margin = new Thickness(thumbX, 14, 0, 0);
+            }
         }
 
         private DispatcherTimer _waveTimer = null;
@@ -3911,7 +3918,12 @@ namespace Two_UI_Lock_Screen
                 MusicSeekWaveCanvas.Visibility = Visibility.Collapsed;
             }
 
-            if (MusicSeekThumb != null)
+            if (MusicSeekThumbTransform != null)
+            {
+                double thumbX = Math.Max(0.0, Math.Min(totalWidth - 18.0, playedWidth - 9.0));
+                MusicSeekThumbTransform.TranslateX = thumbX;
+            }
+            else if (MusicSeekThumb != null)
             {
                 double thumbX = Math.Max(0.0, Math.Min(totalWidth - 18.0, playedWidth - 9.0));
                 MusicSeekThumb.Margin = new Thickness(thumbX, 14, 0, 0);
