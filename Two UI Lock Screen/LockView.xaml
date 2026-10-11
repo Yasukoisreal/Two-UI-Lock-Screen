@@ -291,10 +291,10 @@
                                         <Canvas x:Name="MusicSeekWaveCanvas" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Width="0" Visibility="Collapsed">
                                             <!-- Đệm tròn bo mép trái chuẩn radius 5, dày 10px từ Y=18 đến Y=28 khớp hoàn toàn rãnh seekbar -->
                                             <Border x:Name="MusicSeekWaveLeftCap" Width="10" Height="10" CornerRadius="5" Background="#F0FFFFFF" Canvas.Left="0" Canvas.Top="18" />
-                                            <!-- 1. Sóng biển phía sau: sóng nhỏ hơn, trôi nhanh hơn, màu nhạt bán trong suốt nhẹ -->
-                                            <Path x:Name="MusicSeekWaveBackPath" Fill="#DCBACEE0" />
-                                            <!-- 2. Sóng biển phía trước: sóng lớn hơn, trôi chậm hơn, pastel sáng bán trong suốt rất nhỏ -->
-                                            <Path x:Name="MusicSeekWaveFrontPath" Fill="#F0FFFFFF" />
+                                            <!-- 1. Sóng biển lớn phía sau: sóng lớn hơn, trôi chậm hơn, màu trắng/pastel sáng nguyên khối -->
+                                            <Path x:Name="MusicSeekWaveBackPath" Fill="#F5FFFFFF" />
+                                            <!-- 2. Sóng biển nhỏ phía trước: sóng nhỏ hơn, trôi nhanh hơn, bán trong suốt tinh tế -->
+                                            <Path x:Name="MusicSeekWaveFrontPath" Fill="#B0BACEE0" />
                                         </Canvas>
                                         <!-- Nút trượt One UI Thumb tròn xoe 18x18 bo tròn 9, tâm trục khớp tại Y=23 cùng tâm rãnh -->
                                         <Border x:Name="MusicSeekThumb" Width="18" Height="18" CornerRadius="9" Background="#F8E2F1FD"

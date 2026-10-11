@@ -2649,18 +2649,18 @@ namespace Two_UI_Lock_Screen
             double W = playedWidth;
             if (W < 20.0) return;
 
-            // 1. Sóng biển phía sau: sóng nhỏ hơn (7.5px), bước sóng ngắn hơn (95px), trôi nhanh hơn, nhân hệ số biên độ dâng/hạ sóng
-            double hSmall = 7.5 * Math.Min(1.0, W / 50.0) * _waveAmplitudeScale;
+            // 1. Sóng biển lớn (ở phía sau): sóng lớn hơn (11.5px), bước sóng dài hơn (135px), trôi chậm hơn (v ≈ 59.3 px/s), màu nền sáng nguyên khối
+            double hLarge = 11.5 * Math.Min(1.0, W / 60.0) * _waveAmplitudeScale;
             if (MusicSeekWaveBackPath != null)
             {
-                MusicSeekWaveBackPath.Data = BuildWaveGeometry(W, hSmall, 95.0, _wavePhaseSmall, 1.6);
+                MusicSeekWaveBackPath.Data = BuildWaveGeometry(W, hLarge, 135.0, _wavePhaseLarge, 1.6);
             }
 
-            // 2. Sóng biển phía trước: sóng lớn hơn (11.5px), bước sóng dài hơn (135px), trôi chậm hơn, nhân hệ số biên độ dâng/hạ sóng
-            double hLarge = 11.5 * Math.Min(1.0, W / 60.0) * _waveAmplitudeScale;
+            // 2. Sóng biển nhỏ (ở phía trước): sóng nhỏ hơn (7.5px), bước sóng ngắn hơn (95px), trôi nhanh hơn (v ≈ 81.6 px/s), bán trong suốt tinh tế
+            double hSmall = 7.5 * Math.Min(1.0, W / 50.0) * _waveAmplitudeScale;
             if (MusicSeekWaveFrontPath != null)
             {
-                MusicSeekWaveFrontPath.Data = BuildWaveGeometry(W, hLarge, 135.0, _wavePhaseLarge, 1.6);
+                MusicSeekWaveFrontPath.Data = BuildWaveGeometry(W, hSmall, 95.0, _wavePhaseSmall, 1.6);
             }
         }
 
@@ -2668,25 +2668,26 @@ namespace Two_UI_Lock_Screen
 
         private string _lastPaletteCoverUrl = null;
         private WebClient _paletteWebClient = null;
-        private static readonly Color DefaultSeekFrontColor = Color.FromArgb(240, 255, 255, 255);
-        private static readonly Color DefaultSeekBackColor = Color.FromArgb(220, 186, 206, 224);
+        private static readonly Color DefaultSeekFrontColor = Color.FromArgb(175, 195, 220, 240);
+        private static readonly Color DefaultSeekBackColor = Color.FromArgb(245, 255, 255, 255);
 
         private void ApplyMusicSeekPalette(Color frontColor, Color backColor)
         {
-            // Bán trong suốt ở mức độ rất nhỏ chuẩn Samsung One UI 6.1 (Alpha 240 ~94% cho sóng trước, 220 ~86% cho sóng sau)
-            byte frontAlpha = 240;
-            byte backAlpha = 220;
-            byte thumbAlpha = 248;
+            // Sóng nhỏ phía trước: tăng độ bán trong suốt chuẩn One UI 6.1 (Alpha 175 ~68%)
+            // Sóng lớn phía sau: màu sáng nguyên khối (Alpha 245 ~96%)
+            byte frontAlpha = 175;
+            byte backAlpha = 245;
+            byte thumbAlpha = 250;
 
             var frontBrush = new SolidColorBrush(Color.FromArgb(frontAlpha, frontColor.R, frontColor.G, frontColor.B));
             var backBrush = new SolidColorBrush(Color.FromArgb(backAlpha, backColor.R, backColor.G, backColor.B));
-            var thumbBrush = new SolidColorBrush(Color.FromArgb(thumbAlpha, frontColor.R, frontColor.G, frontColor.B));
+            var thumbBrush = new SolidColorBrush(Color.FromArgb(thumbAlpha, backColor.R, backColor.G, backColor.B));
 
-            if (MusicSeekWaveFrontPath != null) MusicSeekWaveFrontPath.Fill = frontBrush;
-            if (MusicSeekWaveLeftCap != null) MusicSeekWaveLeftCap.Background = frontBrush;
-            if (MusicSeekThumb != null) MusicSeekThumb.Background = thumbBrush;
-            if (MusicSeekPlayedTrack != null) MusicSeekPlayedTrack.Background = frontBrush;
             if (MusicSeekWaveBackPath != null) MusicSeekWaveBackPath.Fill = backBrush;
+            if (MusicSeekWaveFrontPath != null) MusicSeekWaveFrontPath.Fill = frontBrush;
+            if (MusicSeekWaveLeftCap != null) MusicSeekWaveLeftCap.Background = backBrush;
+            if (MusicSeekThumb != null) MusicSeekThumb.Background = thumbBrush;
+            if (MusicSeekPlayedTrack != null) MusicSeekPlayedTrack.Background = backBrush;
         }
 
         private void ResetMusicSeekPalette()
@@ -2863,15 +2864,15 @@ namespace Two_UI_Lock_Screen
             double domH = bestBin * 10.0 + 5.0;
             double avgS = binSats[bestBin] / Math.Max(1, binCounts[bestBin]);
 
-            // 1. Sóng trước, núm seek, đệm trái: Pastel rất sáng, tinh khôi chuẩn One UI 6.1
-            double sFront = Math.Max(0.20, Math.Min(0.45, avgS * 0.65));
-            double lFront = 0.92;
-            frontColor = HslToColor(domH, sFront, lFront);
-
-            // 2. Sóng sau: Cùng tông nhưng đậm hơn và sâu hơn một chút
-            double sBack = Math.Max(0.30, Math.Min(0.60, avgS * 0.80));
-            double lBack = 0.81;
+            // 1. Sóng lớn ở phía sau: Trắng sáng pastel tinh khôi chuẩn One UI 6.1
+            double sBack = Math.Max(0.18, Math.Min(0.40, avgS * 0.60));
+            double lBack = 0.93;
             backColor = HslToColor(domH, sBack, lBack);
+
+            // 2. Sóng nhỏ ở phía trước: Cùng sắc thái nhưng màu đậm hơn một chút để khi phủ bán trong suốt tạo độ tương phản nước đẹp mắt
+            double sFront = Math.Max(0.28, Math.Min(0.58, avgS * 0.80));
+            double lFront = 0.86;
+            frontColor = HslToColor(domH, sFront, lFront);
         }
 
         private static void RgbToHsl(int r, int g, int b, out double h, out double s, out double l)
