@@ -2599,18 +2599,37 @@ namespace Two_UI_Lock_Screen
             double yBottom = 28.0;
             double twoPiOverLambda = 6.283185307179586 / wavelength;
 
+            // Chiều rộng hiệu dụng từ mép bo tròn x = 5.0 đến x = W
+            double spanW = Math.Max(1.0, W - 5.0);
             // Khoảng cách bắt đầu nổi lên xa dần theo thời gian/độ dài seek (~24% chiều dài, tối thiểu 20px)
-            double taperLen = Math.Max(20.0, W * 0.24);
+            double taperLen = Math.Max(20.0, spanW * 0.24);
 
+            var figure = new PathFigure
+            {
+                IsClosed = true,
+                IsFilled = true,
+                StartPoint = new Point(5.0, yBottom)
+            };
+
+            // 1. Cung tròn bán kính R=5 bo tròn mép trái hoàn hảo từ (5.0, 28.0) qua (0.0, 23.0) đến (5.0, 18.0)
+            var leftArc = new ArcSegment
+            {
+                Point = new Point(5.0, yBaseTop),
+                Size = new Size(5.0, 5.0),
+                SweepDirection = SweepDirection.Clockwise,
+                IsLargeArc = false
+            };
+            figure.Segments.Add(leftArc);
+
+            // 2. Các điểm gợn sóng từ x = 5.0 đến x = W
             var points = new PointCollection();
             for (int i = 0; i <= WAVE_POINTS_COUNT; i++)
             {
                 double u = (double)i / WAVE_POINTS_COUNT;
-                double x = u * W;
+                double x = 5.0 + u * spanW;
 
                 // Vát êm đềm ở 2 đầu: bình phương hàm sin (Raised Cosine) giúp tiếp tuyến tại 2 đầu phẳng hoàn toàn (slope = 0)
-                // Khoảng cách chuyển tiếp xa dần theo độ dài seek chuẩn Samsung One UI 6.1
-                double uLeft = Math.Min(1.0, x / taperLen);
+                double uLeft = Math.Min(1.0, (x - 5.0) / taperLen);
                 double uRight = Math.Min(1.0, (W - x) / taperLen);
                 double sinLeft = Math.Sin(uLeft * (Math.PI / 2.0));
                 double sinRight = Math.Sin(uRight * (Math.PI / 2.0));
@@ -2627,15 +2646,9 @@ namespace Two_UI_Lock_Screen
 
             // Điểm khép góc phải dưới tại nút seek thumb (W, yBottom)
             points.Add(new Point(W, yBottom));
-            // Điểm khép góc trái dưới (5.0, yBottom) nối liền vào đệm tròn radius 5 dày 10px
+            // Điểm khép góc trái dưới đáy (5.0, yBottom) nối liền vào StartPoint của cung tròn
             points.Add(new Point(5.0, yBottom));
 
-            var figure = new PathFigure
-            {
-                IsClosed = true,
-                IsFilled = true,
-                StartPoint = new Point(5.0, yBaseTop)
-            };
             figure.Segments.Add(new PolyLineSegment { Points = points });
 
             var geom = new PathGeometry();

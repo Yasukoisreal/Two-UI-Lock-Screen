@@ -289,8 +289,8 @@
                                                 VerticalAlignment="Top" Margin="0,18,0,0" HorizontalAlignment="Left" Width="0" />
                                         <!-- Rãnh tiến độ dạng sóng biển One UI 6.1 khi đang phát nhạc (2 lớp sóng biển chồng lên nhau) -->
                                         <Canvas x:Name="MusicSeekWaveCanvas" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Width="0" Visibility="Collapsed">
-                                            <!-- Đệm tròn bo mép trái chuẩn radius 5, dày 10px từ Y=18 đến Y=28 khớp hoàn toàn rãnh seekbar -->
-                                            <Border x:Name="MusicSeekWaveLeftCap" Width="10" Height="10" CornerRadius="5" Background="#F0FFFFFF" Canvas.Left="0" Canvas.Top="18" />
+                                            <!-- Đệm tròn bo mép trái: ẩn vì cung tròn ArcSegment được tích hợp trực tiếp vào hình học vector sóng -->
+                                            <Border x:Name="MusicSeekWaveLeftCap" Width="10" Height="10" CornerRadius="5" Background="#F0FFFFFF" Canvas.Left="0" Canvas.Top="18" Visibility="Collapsed" />
                                             <!-- 1. Sóng biển lớn phía sau: sóng lớn hơn, trôi chậm hơn, màu trắng/pastel sáng nguyên khối -->
                                             <Path x:Name="MusicSeekWaveBackPath" Fill="#F5FFFFFF" />
                                             <!-- 2. Sóng biển nhỏ phía trước: sóng nhỏ hơn, trôi nhanh hơn, bán trong suốt tinh tế -->
