@@ -57,7 +57,7 @@ namespace Two_UI_Lock_Screen
         private bool _isShortcutDragging = false;
         private bool _isRightShortcutActive = false;
         private bool _hasShortcutVibrated = false;
-        private const double ShortcutUnlockThreshold = 110.0;
+        private const double ShortcutUnlockThreshold = 240.0;
 
         public LockView()
         {
@@ -1618,9 +1618,15 @@ namespace Two_UI_Lock_Screen
             ForegroundTransform.CenterX = w / 2.0;
             ForegroundTransform.CenterY = h / 2.0;
 
+            if (ShortcutClipGeometry != null)
+            {
+                ShortcutClipGeometry.Rect = new Rect(0, 0, w, h);
+            }
+
             var activeBtn = isRight ? RightShortcutButton : LeftShortcutButton;
             var activeTrans = isRight ? RightShortcutTransform : LeftShortcutTransform;
             var activePanel = isRight ? CameraSwipePanel : TorchSwipePanel;
+            var activePanelTrans = isRight ? CameraSwipePanelTransform : TorchSwipePanelTransform;
             var activeIcon = isRight ? (UIElement)CameraSwipeIcon : (UIElement)TorchSwipeIcon;
             var activeIconTrans = isRight ? CameraSwipeIconTransform : TorchSwipeIconTransform;
 
@@ -1635,11 +1641,17 @@ namespace Two_UI_Lock_Screen
                 ShortcutDimOverlay.Opacity = 0.0;
             }
 
+            double initialOffscreenX = isRight ? 480.0 : -480.0;
+            double peekTargetX = isRight ? (480.0 - 28.0) : -(480.0 - 28.0);
+
             if (activePanel != null)
             {
                 activePanel.Visibility = Visibility.Visible;
-                activePanel.Width = 0.0;
-                activePanel.Opacity = 0.0;
+                activePanel.Opacity = 0.55;
+            }
+            if (activePanelTrans != null)
+            {
+                activePanelTrans.TranslateX = initialOffscreenX;
             }
             if (activeIcon != null)
             {
@@ -1647,16 +1659,8 @@ namespace Two_UI_Lock_Screen
             }
             if (activeIconTrans != null)
             {
-                activeIconTrans.ScaleX = 0.88;
-                activeIconTrans.ScaleY = 0.88;
-            }
-            if (isRight)
-            {
-                if (CameraSwipeIcon != null) CameraSwipeIcon.Margin = new Thickness(0, 0, 10, 0);
-            }
-            else
-            {
-                if (TorchSwipeIcon != null) TorchSwipeIcon.Margin = new Thickness(10, 0, 0, 0);
+                activeIconTrans.ScaleX = 1.0;
+                activeIconTrans.ScaleY = 1.0;
             }
 
             // Hiệu ứng chạm & giữ ban đầu (Press & Hold feedback One UI 6.1):
@@ -1685,17 +1689,12 @@ namespace Two_UI_Lock_Screen
                 sb.Children.Add(btnFade);
             }
 
-            if (activePanel != null)
+            if (activePanelTrans != null)
             {
-                var panelPeek = new DoubleAnimation { From = 0.0, To = 28.0, Duration = TimeSpan.FromMilliseconds(120), EasingFunction = easeOut };
-                Storyboard.SetTarget(panelPeek, activePanel);
-                Storyboard.SetTargetProperty(panelPeek, new PropertyPath("Width"));
+                var panelPeek = new DoubleAnimation { From = initialOffscreenX, To = peekTargetX, Duration = TimeSpan.FromMilliseconds(120), EasingFunction = easeOut };
+                Storyboard.SetTarget(panelPeek, activePanelTrans);
+                Storyboard.SetTargetProperty(panelPeek, new PropertyPath("TranslateX"));
                 sb.Children.Add(panelPeek);
-
-                var panelFade = new DoubleAnimation { From = 0.0, To = 0.50, Duration = TimeSpan.FromMilliseconds(120), EasingFunction = easeOut };
-                Storyboard.SetTarget(panelFade, activePanel);
-                Storyboard.SetTargetProperty(panelFade, new PropertyPath("Opacity"));
-                sb.Children.Add(panelFade);
             }
 
             sb.Completed += (s, ev) =>
@@ -1703,10 +1702,9 @@ namespace Two_UI_Lock_Screen
                 _shortcutPressStory = null;
                 if (activeTrans != null) { activeTrans.ScaleX = 0.75; activeTrans.ScaleY = 0.75; }
                 if (activeBtn != null) activeBtn.Opacity = 0.0;
-                if (activePanel != null && !_isShortcutDragging)
+                if (activePanelTrans != null && !_isShortcutDragging)
                 {
-                    activePanel.Width = 28.0;
-                    activePanel.Opacity = 0.50;
+                    activePanelTrans.TranslateX = peekTargetX;
                 }
             };
 
@@ -1763,8 +1761,10 @@ namespace Two_UI_Lock_Screen
 
             double dist = CalculateValidShortcutDistance(_shortcutDragX, _shortcutDragY, isRight);
             double progress = Math.Min(1.0, dist / ShortcutUnlockThreshold);
+            bool isThresholdReached = dist >= ShortcutUnlockThreshold;
 
             var activePanel = isRight ? CameraSwipePanel : TorchSwipePanel;
+            var activePanelTrans = isRight ? CameraSwipePanelTransform : TorchSwipePanelTransform;
             var activeIcon = isRight ? (UIElement)CameraSwipeIcon : (UIElement)TorchSwipeIcon;
             var activeIconTrans = isRight ? CameraSwipeIconTransform : TorchSwipeIconTransform;
             var activeBtn = isRight ? RightShortcutButton : LeftShortcutButton;
@@ -1773,60 +1773,61 @@ namespace Two_UI_Lock_Screen
             if (activeBtn != null) activeBtn.Opacity = 0.0;
             if (activeTrans != null) { activeTrans.ScaleX = 0.75; activeTrans.ScaleY = 0.75; }
 
-            // 1. Độ rộng & độ đậm bảng nền đen cong One UI 6.1:
-            if (activePanel != null)
+            // 1. Tính toán độ mở rộng của bảng nền tối:
+            // Khi chưa đủ ngưỡng (dist <= 240): mở rộng từ 28px lên 240px
+            // Khi đã đủ ngưỡng và vuốt tiếp tới góc trên bên trái: mở rộng tiếp từ 240px lên tới tối đa 390px
+            double visibleWidth = 28.0 + (progress * 212.0);
+            if (isThresholdReached && dist > ShortcutUnlockThreshold)
             {
-                double targetWidth = 28.0 + (progress * 172.0);
-                if (dist > ShortcutUnlockThreshold)
-                {
-                    targetWidth += Math.Min(25.0, (dist - ShortcutUnlockThreshold) * 0.18);
-                }
-                activePanel.Width = targetWidth;
-                activePanel.Opacity = 0.50 + (progress * 0.44);
+                double extraDist = dist - ShortcutUnlockThreshold;
+                visibleWidth += Math.Min(150.0, extraDist * 0.45);
             }
 
-            // 2. Icon sáng dần từ mờ (0.35) đến sáng rõ nét (1.0), dịch chuyển nhẹ vào trong và phóng to nhẹ (0.88 -> 1.18)
+            if (activePanelTrans != null)
+            {
+                activePanelTrans.TranslateX = isRight ? (480.0 - visibleWidth) : -(480.0 - visibleWidth);
+            }
+
+            // 2. Trạng thái icon và nền tối:
+            // Chỉ khi đạt đủ phạm vi hình vuông W/2 thì icon và nền tối mới được phép rõ hoàn toàn và phóng to nhẹ,
+            // không rõ dần và phóng to dần theo quãng đường vuốt!
+            if (activePanel != null)
+            {
+                activePanel.Opacity = isThresholdReached ? 0.94 : 0.55;
+            }
+
             if (activeIcon != null)
             {
-                activeIcon.Opacity = 0.35 + (progress * 0.65);
+                activeIcon.Opacity = isThresholdReached ? 1.0 : 0.35;
             }
+
             if (activeIconTrans != null)
             {
-                double iconScale = 0.88 + (progress * 0.30);
+                double iconScale = isThresholdReached ? 1.15 : 1.0;
                 activeIconTrans.ScaleX = iconScale;
                 activeIconTrans.ScaleY = iconScale;
             }
 
-            double marginOffset = 10.0 + (progress * 48.0);
-            if (isRight)
-            {
-                if (CameraSwipeIcon != null) CameraSwipeIcon.Margin = new Thickness(0, 0, marginOffset, 0);
-            }
-            else
-            {
-                if (TorchSwipeIcon != null) TorchSwipeIcon.Margin = new Thickness(marginOffset, 0, 0, 0);
-            }
-
-            // 3. Các tiện ích màn hình khóa thu nhỏ nhẹ (1.0 -> 0.92), tối dần và fade out
+            // 3. Các tiện ích màn hình khóa fade out dần cho tới khi đủ phạm vi thì fade out hoàn toàn
             if (ForegroundTransform != null)
             {
-                double scale = 1.0 - (progress * 0.08);
-                ForegroundTransform.ScaleX = scale;
-                ForegroundTransform.ScaleY = scale;
+                double fgScale = 1.0 - (progress * 0.08);
+                ForegroundTransform.ScaleX = fgScale;
+                ForegroundTransform.ScaleY = fgScale;
             }
 
             if (ForegroundPanel != null)
             {
-                ForegroundPanel.Opacity = Math.Max(0.12, 1.0 - (progress * 0.88));
+                ForegroundPanel.Opacity = Math.Max(0.0, 1.0 - progress);
             }
 
             if (ShortcutDimOverlay != null)
             {
-                ShortcutDimOverlay.Opacity = progress * 0.35;
+                ShortcutDimOverlay.Opacity = progress * 0.45;
             }
 
-            // 4. Rung phản hồi haptic 1 lần khi vuốt đủ xa (vượt ngưỡng)
-            if (dist >= ShortcutUnlockThreshold)
+            // 4. Rung phản hồi haptic 1 lần ngay khi chạm ngưỡng đủ phạm vi
+            if (isThresholdReached)
             {
                 if (!_hasShortcutVibrated)
                 {
@@ -1934,6 +1935,7 @@ namespace Two_UI_Lock_Screen
             var activeBtn = isRight ? RightShortcutButton : LeftShortcutButton;
             var activeTrans = isRight ? RightShortcutTransform : LeftShortcutTransform;
             var activePanel = isRight ? CameraSwipePanel : TorchSwipePanel;
+            var activePanelTrans = isRight ? CameraSwipePanelTransform : TorchSwipePanelTransform;
             var activeIcon = isRight ? (UIElement)CameraSwipeIcon : (UIElement)TorchSwipeIcon;
             var activeIconTrans = isRight ? CameraSwipeIconTransform : TorchSwipeIconTransform;
 
@@ -1941,19 +1943,24 @@ namespace Two_UI_Lock_Screen
             var easeOut = new CubicEase { EasingMode = EasingMode.EaseOut };
             var duration = TimeSpan.FromMilliseconds(220);
 
-            // 1. Thu nhỏ chiều rộng panel về 0 và mờ dần
-            if (activePanel != null && activePanel.Width > 0)
+            double offscreenTargetX = isRight ? 480.0 : -480.0;
+
+            // 1. Trượt panel về lại mép màn hình (nuốt chửng icon vào cạnh) và mờ dần
+            if (activePanelTrans != null)
             {
-                var panelWidthAnim = new DoubleAnimation
+                var panelSlideAnim = new DoubleAnimation
                 {
-                    To = 0.0,
+                    To = offscreenTargetX,
                     Duration = duration,
                     EasingFunction = easeOut
                 };
-                Storyboard.SetTarget(panelWidthAnim, activePanel);
-                Storyboard.SetTargetProperty(panelWidthAnim, new PropertyPath("Width"));
-                sb.Children.Add(panelWidthAnim);
+                Storyboard.SetTarget(panelSlideAnim, activePanelTrans);
+                Storyboard.SetTargetProperty(panelSlideAnim, new PropertyPath("TranslateX"));
+                sb.Children.Add(panelSlideAnim);
+            }
 
+            if (activePanel != null && activePanel.Opacity > 0)
+            {
                 var panelFadeAnim = new DoubleAnimation
                 {
                     To = 0.0,
@@ -1965,15 +1972,15 @@ namespace Two_UI_Lock_Screen
                 sb.Children.Add(panelFadeAnim);
             }
 
-            // 2. Thu nhỏ icon về tỉ lệ ban đầu (0.88) và độ mờ 0.35
+            // 2. Thu nhỏ icon về Scale 1.0 và Opacity 0.35
             if (activeIconTrans != null)
             {
-                var iconScaleX = new DoubleAnimation { To = 0.88, Duration = duration, EasingFunction = easeOut };
+                var iconScaleX = new DoubleAnimation { To = 1.0, Duration = duration, EasingFunction = easeOut };
                 Storyboard.SetTarget(iconScaleX, activeIconTrans);
                 Storyboard.SetTargetProperty(iconScaleX, new PropertyPath("ScaleX"));
                 sb.Children.Add(iconScaleX);
 
-                var iconScaleY = new DoubleAnimation { To = 0.88, Duration = duration, EasingFunction = easeOut };
+                var iconScaleY = new DoubleAnimation { To = 1.0, Duration = duration, EasingFunction = easeOut };
                 Storyboard.SetTarget(iconScaleY, activeIconTrans);
                 Storyboard.SetTargetProperty(iconScaleY, new PropertyPath("ScaleY"));
                 sb.Children.Add(iconScaleY);
@@ -2074,35 +2081,39 @@ namespace Two_UI_Lock_Screen
             if (CameraSwipePanel != null)
             {
                 CameraSwipePanel.Visibility = Visibility.Collapsed;
-                CameraSwipePanel.Width = 0.0;
                 CameraSwipePanel.Opacity = 0.0;
+            }
+            if (CameraSwipePanelTransform != null)
+            {
+                CameraSwipePanelTransform.TranslateX = 480.0;
             }
             if (CameraSwipeIcon != null)
             {
                 CameraSwipeIcon.Opacity = 0.35;
-                CameraSwipeIcon.Margin = new Thickness(0, 0, 10, 0);
             }
             if (CameraSwipeIconTransform != null)
             {
-                CameraSwipeIconTransform.ScaleX = 0.88;
-                CameraSwipeIconTransform.ScaleY = 0.88;
+                CameraSwipeIconTransform.ScaleX = 1.0;
+                CameraSwipeIconTransform.ScaleY = 1.0;
             }
 
             if (TorchSwipePanel != null)
             {
                 TorchSwipePanel.Visibility = Visibility.Collapsed;
-                TorchSwipePanel.Width = 0.0;
                 TorchSwipePanel.Opacity = 0.0;
+            }
+            if (TorchSwipePanelTransform != null)
+            {
+                TorchSwipePanelTransform.TranslateX = -480.0;
             }
             if (TorchSwipeIcon != null)
             {
                 TorchSwipeIcon.Opacity = 0.35;
-                TorchSwipeIcon.Margin = new Thickness(10, 0, 0, 0);
             }
             if (TorchSwipeIconTransform != null)
             {
-                TorchSwipeIconTransform.ScaleX = 0.88;
-                TorchSwipeIconTransform.ScaleY = 0.88;
+                TorchSwipeIconTransform.ScaleX = 1.0;
+                TorchSwipeIconTransform.ScaleY = 1.0;
             }
 
             if (ShortcutDimOverlay != null)

@@ -446,33 +446,46 @@
                    IsHitTestVisible="False" Visibility="Collapsed"
                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
 
-        <!-- Bảng nền đen mờ vuốt phím tắt Đèn pin (Trái: Dọc thân máy One UI 6.1) -->
-        <Border x:Name="TorchSwipePanel" HorizontalAlignment="Left" VerticalAlignment="Center"
-                Height="680" Width="0" CornerRadius="0,80,80,0"
-                Background="#F00B0E14" Opacity="0.0" IsHitTestVisible="False" Visibility="Collapsed">
-            <Image x:Name="TorchSwipeIcon" Source="/Assets/Icons/ic_shortcut_flash_white.png"
-                   Width="34" Height="34" Stretch="Uniform"
-                   HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"
-                   Opacity="0.35">
-                <Image.RenderTransform>
-                    <CompositeTransform x:Name="TorchSwipeIconTransform" CenterX="17" CenterY="17" ScaleX="0.88" ScaleY="0.88" />
-                </Image.RenderTransform>
-            </Image>
-        </Border>
+        <!-- Khung chứa bảng vuốt phím tắt One UI 6.1 có clip cắt viền theo mép màn hình -->
+        <Grid x:Name="ShortcutSwipeContainer" IsHitTestVisible="False">
+            <Grid.Clip>
+                <RectangleGeometry x:Name="ShortcutClipGeometry" Rect="0,0,480,900" />
+            </Grid.Clip>
 
-        <!-- Bảng nền đen mờ vuốt phím tắt Máy ảnh (Phải: Dọc thân máy One UI 6.1) -->
-        <Border x:Name="CameraSwipePanel" HorizontalAlignment="Right" VerticalAlignment="Center"
-                Height="680" Width="0" CornerRadius="80,0,0,80"
-                Background="#F00B0E14" Opacity="0.0" IsHitTestVisible="False" Visibility="Collapsed">
-            <Image x:Name="CameraSwipeIcon" Source="/Assets/Icons/ic_shortcut_camera_white.png"
-                   Width="36" Height="32" Stretch="Uniform"
-                   HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0"
-                   Opacity="0.35">
-                <Image.RenderTransform>
-                    <CompositeTransform x:Name="CameraSwipeIconTransform" CenterX="18" CenterY="16" ScaleX="0.88" ScaleY="0.88" />
-                </Image.RenderTransform>
-            </Image>
-        </Border>
+            <!-- Bảng nền đen mờ vuốt phím tắt Đèn pin (Trái: Dọc thân máy One UI 6.1) -->
+            <Border x:Name="TorchSwipePanel" HorizontalAlignment="Left" VerticalAlignment="Center"
+                    Height="720" Width="480" CornerRadius="0,80,80,0"
+                    Background="#F00B0E14" Opacity="0.0" Visibility="Collapsed">
+                <Border.RenderTransform>
+                    <CompositeTransform x:Name="TorchSwipePanelTransform" TranslateX="-480" />
+                </Border.RenderTransform>
+                <Image x:Name="TorchSwipeIcon" Source="/Assets/Icons/ic_shortcut_flash_white.png"
+                       Width="34" Height="34" Stretch="Uniform"
+                       HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,195,0"
+                       Opacity="0.35">
+                    <Image.RenderTransform>
+                        <CompositeTransform x:Name="TorchSwipeIconTransform" CenterX="17" CenterY="17" ScaleX="1.0" ScaleY="1.0" />
+                    </Image.RenderTransform>
+                </Image>
+            </Border>
+
+            <!-- Bảng nền đen mờ vuốt phím tắt Máy ảnh (Phải: Dọc thân máy One UI 6.1) -->
+            <Border x:Name="CameraSwipePanel" HorizontalAlignment="Right" VerticalAlignment="Center"
+                    Height="720" Width="480" CornerRadius="80,0,0,80"
+                    Background="#F00B0E14" Opacity="0.0" Visibility="Collapsed">
+                <Border.RenderTransform>
+                    <CompositeTransform x:Name="CameraSwipePanelTransform" TranslateX="480" />
+                </Border.RenderTransform>
+                <Image x:Name="CameraSwipeIcon" Source="/Assets/Icons/ic_shortcut_camera_white.png"
+                       Width="36" Height="32" Stretch="Uniform"
+                       HorizontalAlignment="Left" VerticalAlignment="Center" Margin="195,0,0,0"
+                       Opacity="0.35">
+                    <Image.RenderTransform>
+                        <CompositeTransform x:Name="CameraSwipeIconTransform" CenterX="18" CenterY="16" ScaleX="1.0" ScaleY="1.0" />
+                    </Image.RenderTransform>
+                </Image>
+            </Border>
+        </Grid>
 
         <!-- Layer 3: In-process Quick Camera Viewfinder Overlay (Samsung One UI 6.1 Camera) -->
         <Grid x:Name="CameraOverlay" Visibility="Collapsed" Background="Black">
