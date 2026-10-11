@@ -2417,6 +2417,9 @@ namespace Two_UI_Lock_Screen
             _currentAppIconKey = null;
             ResetMusicSeekPalette();
             StopWaveAnimation();
+            _waveAmplitudeScale = 0.0;
+            _targetWaveAmplitudeScale = 0.0;
+            _isWaveTransitioning = false;
             if (_waveTimer != null)
             {
                 _waveTimer.Tick -= WaveTimer_Tick;
@@ -2471,13 +2474,32 @@ namespace Two_UI_Lock_Screen
         private bool _isWaveAnimating = false;
         private const int WAVE_POINTS_COUNT = 36;
 
+        // Hiệu ứng dâng trào / hạ phẳng sóng biển khi Phát / Tạm dừng chuẩn Samsung One UI 6.1
+        private double _waveAmplitudeScale = 0.0;
+        private double _targetWaveAmplitudeScale = 0.0;
+        private double _waveTransitionStartScale = 0.0;
+        private DateTime _waveTransitionStartTime = DateTime.UtcNow;
+        private bool _isWaveTransitioning = false;
+        private const double WAVE_TRANSITION_DURATION_MS = 320.0; // 320ms mượt mà chuẩn One UI
+
         private void UpdateWaveProgress(double playedWidth, bool isPlaying)
         {
             if (MusicSeekWaveCanvas == null) return;
 
             _currentPlayedWidth = playedWidth;
 
-            if (isPlaying && isMusicExpanded && playedWidth >= 20.0)
+            bool shouldWave = isPlaying && isMusicExpanded && playedWidth >= 20.0;
+            double target = shouldWave ? 1.0 : 0.0;
+
+            if (target != _targetWaveAmplitudeScale)
+            {
+                _targetWaveAmplitudeScale = target;
+                _waveTransitionStartScale = _waveAmplitudeScale;
+                _waveTransitionStartTime = DateTime.UtcNow;
+                _isWaveTransitioning = true;
+            }
+
+            if (shouldWave || _isWaveTransitioning || _waveAmplitudeScale > 0.001)
             {
                 if (MusicSeekPlayedTrack != null) MusicSeekPlayedTrack.Visibility = Visibility.Collapsed;
                 MusicSeekWaveCanvas.Visibility = Visibility.Visible;
@@ -2524,14 +2546,48 @@ namespace Two_UI_Lock_Screen
 
         private void WaveTimer_Tick(object sender, EventArgs e)
         {
-            if (!_isWaveAnimating || _currentPlayedWidth < 20.0) return;
+            if (!_isWaveAnimating) return;
 
-            // 1. Sóng biển nhỏ (ở phía sau): tốc độ dịch chuyển nhanh hơn rõ rệt (lambda = 95px, delta phi = 0.180 rad/tick -> v ≈ 81.6 px/s)
-            _wavePhaseSmall += 0.180;
+            // 1. Cập nhật hệ số biên độ sóng khi chuyển đổi Phát / Tạm dừng (Morphing Animation)
+            if (_isWaveTransitioning)
+            {
+                double elapsed = (DateTime.UtcNow - _waveTransitionStartTime).TotalMilliseconds;
+                double t = Math.Max(0.0, Math.Min(1.0, elapsed / WAVE_TRANSITION_DURATION_MS));
+                // Cubic Ease Out (mềm mại, êm dịu)
+                double ease = 1.0 - Math.Pow(1.0 - t, 3.0);
+                _waveAmplitudeScale = _waveTransitionStartScale + (_targetWaveAmplitudeScale - _waveTransitionStartScale) * ease;
+
+                if (t >= 1.0)
+                {
+                    _waveAmplitudeScale = _targetWaveAmplitudeScale;
+                    _isWaveTransitioning = false;
+
+                    // Nếu đã hạ phẳng hoàn toàn về 0 khi tạm dừng -> ẩn canvas sóng và hiển thị thanh tĩnh
+                    if (_targetWaveAmplitudeScale <= 0.0)
+                    {
+                        StopWaveAnimation();
+                        if (MusicSeekWaveCanvas != null) MusicSeekWaveCanvas.Visibility = Visibility.Collapsed;
+                        if (MusicSeekPlayedTrack != null)
+                        {
+                            MusicSeekPlayedTrack.Visibility = Visibility.Visible;
+                            MusicSeekPlayedTrack.Width = _currentPlayedWidth;
+                        }
+                        return;
+                    }
+                }
+            }
+
+            if (_currentPlayedWidth < 20.0) return;
+
+            // 2. Tốc độ trôi pha: giảm dần nhịp nhàng khi sóng đang hạ phẳng xuống
+            double speedFactor = Math.Max(0.15, _waveAmplitudeScale);
+
+            // Sóng biển nhỏ (ở phía sau): v ≈ 81.6 px/s
+            _wavePhaseSmall += 0.180 * speedFactor;
             if (_wavePhaseSmall > 6283.185) _wavePhaseSmall -= 6283.185;
 
-            // 2. Sóng biển lớn (ở phía trước): tốc độ dịch chuyển chậm hơn (lambda = 135px, delta phi = 0.092 rad/tick -> v ≈ 59.3 px/s)
-            _wavePhaseLarge += 0.092;
+            // Sóng biển lớn (ở phía trước): v ≈ 59.3 px/s
+            _wavePhaseLarge += 0.092 * speedFactor;
             if (_wavePhaseLarge > 6283.185) _wavePhaseLarge -= 6283.185;
 
             UpdateWaveGeometry(_currentPlayedWidth);
@@ -2593,15 +2649,15 @@ namespace Two_UI_Lock_Screen
             double W = playedWidth;
             if (W < 20.0) return;
 
-            // 1. Sóng biển phía sau: sóng nhỏ hơn (7.5px), bước sóng ngắn hơn (95px), trôi nhanh hơn, màu nhạt bán trong suốt nhẹ
-            double hSmall = 7.5 * Math.Min(1.0, W / 50.0);
+            // 1. Sóng biển phía sau: sóng nhỏ hơn (7.5px), bước sóng ngắn hơn (95px), trôi nhanh hơn, nhân hệ số biên độ dâng/hạ sóng
+            double hSmall = 7.5 * Math.Min(1.0, W / 50.0) * _waveAmplitudeScale;
             if (MusicSeekWaveBackPath != null)
             {
                 MusicSeekWaveBackPath.Data = BuildWaveGeometry(W, hSmall, 95.0, _wavePhaseSmall, 1.6);
             }
 
-            // 2. Sóng biển phía trước: sóng lớn hơn (11.5px), bước sóng dài hơn (135px), trôi chậm hơn, pastel sáng bán trong suốt rất nhỏ
-            double hLarge = 11.5 * Math.Min(1.0, W / 60.0);
+            // 2. Sóng biển phía trước: sóng lớn hơn (11.5px), bước sóng dài hơn (135px), trôi chậm hơn, nhân hệ số biên độ dâng/hạ sóng
+            double hLarge = 11.5 * Math.Min(1.0, W / 60.0) * _waveAmplitudeScale;
             if (MusicSeekWaveFrontPath != null)
             {
                 MusicSeekWaveFrontPath.Data = BuildWaveGeometry(W, hLarge, 135.0, _wavePhaseLarge, 1.6);
@@ -3480,6 +3536,9 @@ namespace Two_UI_Lock_Screen
             }
 
             StopWaveAnimation();
+            _waveAmplitudeScale = 0.0;
+            _targetWaveAmplitudeScale = 0.0;
+            _isWaveTransitioning = false;
 
             // Chuẩn bị trạng thái hiển thị trước khi chạy storyboard
             if (MusicThumbBorderCollapsed != null)
@@ -3677,11 +3736,15 @@ namespace Two_UI_Lock_Screen
             if (svc.IsPlaying)
             {
                 if (!svc.CanPause) return;
+                // Phản hồi thị giác lập tức: kích hoạt animation hạ phẳng sóng ngay khi chạm nút
+                UpdateWaveProgress(_currentPlayedWidth, false);
                 await svc.SendPauseAsync();
             }
             else
             {
                 if (!svc.CanPlay) return;
+                // Phản hồi thị giác lập tức: kích hoạt animation dâng trào sóng ngay khi chạm nút
+                UpdateWaveProgress(_currentPlayedWidth, true);
                 await svc.SendPlayAsync();
             }
         }
