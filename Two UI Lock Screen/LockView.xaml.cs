@@ -3388,14 +3388,14 @@ namespace Two_UI_Lock_Screen
 
         private string _lastPaletteCoverUrl = null;
         private WebClient _paletteWebClient = null;
-        private static readonly Color DefaultSeekFrontColor = Color.FromArgb(175, 195, 220, 240);
+        private static readonly Color DefaultSeekFrontColor = Color.FromArgb(220, 195, 220, 240);
         private static readonly Color DefaultSeekBackColor = Color.FromArgb(245, 255, 255, 255);
 
         private void ApplyMusicSeekPalette(Color frontColor, Color backColor)
         {
-            // Sóng nhỏ phía trước: tăng độ bán trong suốt chuẩn One UI 6.1 (Alpha 175 ~68%)
+            // Sóng nhỏ phía trước: giảm độ bán trong suốt (Alpha 220 ~86% để hiển thị rõ nét, không bị mờ)
             // Sóng lớn phía sau: màu sáng nguyên khối (Alpha 245 ~96%)
-            byte frontAlpha = 175;
+            byte frontAlpha = 220;
             byte backAlpha = 245;
             byte thumbAlpha = 250;
 
