@@ -2499,12 +2499,20 @@ namespace Two_UI_Lock_Screen
                 _isWaveTransitioning = true;
             }
 
-            if (shouldWave || _isWaveTransitioning || _waveAmplitudeScale > 0.001)
+            if (isMusicExpanded && playedWidth >= 20.0)
             {
                 if (MusicSeekPlayedTrack != null) MusicSeekPlayedTrack.Visibility = Visibility.Collapsed;
                 MusicSeekWaveCanvas.Visibility = Visibility.Visible;
                 MusicSeekWaveCanvas.Width = playedWidth;
-                StartWaveAnimation();
+
+                if (shouldWave || _isWaveTransitioning)
+                {
+                    StartWaveAnimation();
+                }
+                else
+                {
+                    StopWaveAnimation();
+                }
                 UpdateWaveGeometry(playedWidth);
             }
             else
@@ -2562,16 +2570,12 @@ namespace Two_UI_Lock_Screen
                     _waveAmplitudeScale = _targetWaveAmplitudeScale;
                     _isWaveTransitioning = false;
 
-                    // Nếu đã hạ phẳng hoàn toàn về 0 khi tạm dừng -> ẩn canvas sóng và hiển thị thanh tĩnh
+                    // Khi đã hạ phẳng hoàn toàn về 0 khi tạm dừng:
+                    // Dừng timer để giải phóng 100% CPU, nhưng GIỮ NGUYÊN canvas sóng ở trạng thái phẳng để trọn vẹn màu sắc sóng trước không bị mất
                     if (_targetWaveAmplitudeScale <= 0.0)
                     {
                         StopWaveAnimation();
-                        if (MusicSeekWaveCanvas != null) MusicSeekWaveCanvas.Visibility = Visibility.Collapsed;
-                        if (MusicSeekPlayedTrack != null)
-                        {
-                            MusicSeekPlayedTrack.Visibility = Visibility.Visible;
-                            MusicSeekPlayedTrack.Width = _currentPlayedWidth;
-                        }
+                        UpdateWaveGeometry(_currentPlayedWidth);
                         return;
                     }
                 }
@@ -2700,7 +2704,7 @@ namespace Two_UI_Lock_Screen
             if (MusicSeekWaveFrontPath != null) MusicSeekWaveFrontPath.Fill = frontBrush;
             if (MusicSeekWaveLeftCap != null) MusicSeekWaveLeftCap.Background = backBrush;
             if (MusicSeekThumb != null) MusicSeekThumb.Background = thumbBrush;
-            if (MusicSeekPlayedTrack != null) MusicSeekPlayedTrack.Background = backBrush;
+            if (MusicSeekPlayedTrack != null) MusicSeekPlayedTrack.Background = frontBrush;
         }
 
         private void ResetMusicSeekPalette()
