@@ -1126,13 +1126,6 @@ namespace Two_UI_Lock_Screen
                 }
 
                 unlockThreshold = 140.0;
-
-                // Khởi động phiên mở khóa với OS Shell nếu đang ở màn hình chính
-                if (!isPinPadOpen && !isUnlockingStarted)
-                {
-                    isUnlockingStarted = true;
-                    try { ExtensibilityApp.BeginUnlock(); } catch { }
-                }
             }
             catch (Exception ex)
             {
@@ -1158,16 +1151,18 @@ namespace Two_UI_Lock_Screen
                 }
 
                 // 2. Trạng thái bình thường: Vuốt mở khóa
-                if (!isUnlockingStarted)
-                {
-                    isUnlockingStarted = true;
-                    try { ExtensibilityApp.BeginUnlock(); } catch { }
-                }
-
                 cumulativeDragX += e.DeltaManipulation.Translation.X;
                 cumulativeDragY += e.DeltaManipulation.Translation.Y;
 
                 double distance = Math.Sqrt(cumulativeDragX * cumulativeDragX + cumulativeDragY * cumulativeDragY);
+
+                // Chỉ báo cho OS Shell nâng PIN pad khi người dùng thực sự bắt đầu vuốt ngón tay (distance >= 15px)
+                // Ngăn chặn hoàn toàn việc gửi tín hiệu nâng/hạ PIN giả lên OS khi người dùng chỉ bấm nút hoặc chạm nhẹ
+                if (!isPinPadOpen && !isUnlockingStarted && distance >= 15.0)
+                {
+                    isUnlockingStarted = true;
+                    try { ExtensibilityApp.BeginUnlock(); } catch { }
+                }
 
                 // Ảnh nền TUYỆT ĐỐI GIỮ NGUYÊN 100% tại Y=0 trong lúc vuốt tay
                 BackgroundTransform.TranslateX = 0;
@@ -1264,8 +1259,12 @@ namespace Two_UI_Lock_Screen
 
         private void AnimateBackToNormal()
         {
-            try { ExtensibilityApp.EndUnlock(); } catch { }
-            isUnlockingStarted = false;
+            // Chỉ gửi tín hiệu hạ PIN về OS nếu trước đó đã thực sự phát tín hiệu BeginUnlock()
+            if (isUnlockingStarted)
+            {
+                try { ExtensibilityApp.EndUnlock(); } catch { }
+                isUnlockingStarted = false;
+            }
             isPinPadOpen = false;
 
             if (bounceBackStory != null) { try { bounceBackStory.Stop(); } catch { } bounceBackStory = null; }
