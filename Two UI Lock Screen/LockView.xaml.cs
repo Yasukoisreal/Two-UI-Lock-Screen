@@ -514,19 +514,14 @@ namespace Two_UI_Lock_Screen
                 }
                 lastKnownCharging = isCharging;
 
-                // Slot 1 trong Widget Card
+                // Slot 1 trong Widget Card (Biểu tượng tia sét vector Samsung One UI khi sạc)
                 if (BatteryPercentText != null) BatteryPercentText.Text = percent.ToString();
-                if (BatteryWidgetIcon != null) BatteryWidgetIcon.Text = isCharging ? "⚡" : "";
+                if (BatteryWidgetBolt != null) BatteryWidgetBolt.Visibility = isCharging ? Visibility.Visible : Visibility.Collapsed;
+                if (BatteryWidgetIcon != null) BatteryWidgetIcon.Visibility = Visibility.Collapsed;
                 UpdateBatteryArc(percent);
 
                 // Khối thông tin sạc dưới đáy
                 if (BottomBatteryPercent != null) BottomBatteryPercent.Text = percent + "%";
-                if (BottomBatteryImage != null)
-                {
-                    BottomBatteryImage.Source = isCharging 
-                        ? new BitmapImage(new Uri("/Assets/Icons/ic_battery_bolt.png", UriKind.Relative))
-                        : new BitmapImage(new Uri("/Assets/Icons/ic_battery_normal.png", UriKind.Relative));
-                }
 
                 if (BottomChargingEstimateText != null)
                 {
