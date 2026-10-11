@@ -2526,12 +2526,12 @@ namespace Two_UI_Lock_Screen
         {
             if (!_isWaveAnimating || _currentPlayedWidth < 20.0) return;
 
-            // 1. Sóng biển nhỏ (ở phía sau): tốc độ gợn sóng nhanh hơn sóng lớn một chút (delta phi ≈ 0.125 rad/tick)
-            _wavePhaseSmall += 0.125;
+            // 1. Sóng biển nhỏ (ở phía sau): tốc độ dịch chuyển nhanh hơn rõ rệt (lambda = 95px, delta phi = 0.180 rad/tick -> v ≈ 81.6 px/s)
+            _wavePhaseSmall += 0.180;
             if (_wavePhaseSmall > 6283.185) _wavePhaseSmall -= 6283.185;
 
-            // 2. Sóng biển lớn (ở phía trước): tốc độ gợn sóng (lambda = 135 px -> delta phi ≈ 0.088 rad/tick)
-            _wavePhaseLarge += 0.088;
+            // 2. Sóng biển lớn (ở phía trước): tốc độ dịch chuyển chậm hơn (lambda = 135px, delta phi = 0.092 rad/tick -> v ≈ 59.3 px/s)
+            _wavePhaseLarge += 0.092;
             if (_wavePhaseLarge > 6283.185) _wavePhaseLarge -= 6283.185;
 
             UpdateWaveGeometry(_currentPlayedWidth);
