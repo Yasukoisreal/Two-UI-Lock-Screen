@@ -1714,6 +1714,39 @@ namespace Two_UI_Lock_Screen
             sb.Begin();
         }
 
+        private bool IsInValidShortcutQuadrant(double dx, double dy, bool isRight, out double distance)
+        {
+            distance = 0.0;
+            // Chiều dương quy ước hướng vào tâm màn hình và hướng lên trên
+            double xIn = isRight ? -dx : dx; // Vuốt sang trái (phím phải) hoặc sang phải (phím trái)
+            double yIn = -dy;                // Vuốt lên trên (dy < 0 là kéo lên trên màn hình)
+
+            double rawDist = Math.Sqrt(dx * dx + dy * dy);
+            if (rawDist < 6.0)
+            {
+                distance = 0.0;
+                return false;
+            }
+
+            // Tính góc định hướng tính bằng độ (-180° đến 180°):
+            // 0° là đi ngang hoàn toàn vào trong màn hình, 90° là đi thẳng đứng lên trên
+            double angleDeg = Math.Atan2(yIn, xIn) * (180.0 / Math.PI);
+
+            // Giới hạn nghiêm ngặt trong góc phần tư 90 độ hướng vào vùng hiển thị màn hình:
+            // Cho phép dung sai dao động tự nhiên ngón tay từ -5° đến 95°.
+            // BỎ HOÀN TOÀN:
+            // 1. Vuốt xuống dưới (dy > 0 => yIn < 0, angle < -5°)
+            // 2. Vuốt chéo dưới (angle < -5°)
+            // 3. Vuốt vào cạnh màn hình (xIn < 0, angle > 95° hoặc angle < -90°)
+            if (angleDeg >= -5.0 && angleDeg <= 95.0 && xIn > -4.0 && yIn > -8.0)
+            {
+                distance = rawDist;
+                return true;
+            }
+
+            return false;
+        }
+
         private void UpdateShortcutGestureDelta(double deltaX, double deltaY, bool isRight)
         {
             if (!_isShortcutDragging) return;
@@ -1727,8 +1760,10 @@ namespace Two_UI_Lock_Screen
             _shortcutDragX += deltaX;
             _shortcutDragY += deltaY;
 
-            double dist = Math.Sqrt(_shortcutDragX * _shortcutDragX + _shortcutDragY * _shortcutDragY);
-            double progress = Math.Min(1.0, dist / ShortcutUnlockThreshold);
+            double dist;
+            bool isValidDirection = IsInValidShortcutQuadrant(_shortcutDragX, _shortcutDragY, isRight, out dist);
+
+            double progress = isValidDirection ? Math.Min(1.0, dist / ShortcutUnlockThreshold) : 0.0;
 
             var activePanel = isRight ? CameraSwipePanel : TorchSwipePanel;
             var activeIcon = isRight ? (UIElement)CameraSwipeIcon : (UIElement)TorchSwipeIcon;
@@ -1739,12 +1774,11 @@ namespace Two_UI_Lock_Screen
             if (activeBtn != null) activeBtn.Opacity = 0.0;
             if (activeTrans != null) { activeTrans.ScaleX = 0.75; activeTrans.ScaleY = 0.75; }
 
-            // 1. Độ rộng & độ đậm bảng nền đen cong One UI 6.1:
-            // Mở rộng từ 28px tới 200px, nền đen từ mờ 0.50 chuyển dần sang đen rõ ràng 0.94
+            // 1. Độ rộng & độ đậm bảng nền đen cong One UI 6.1 (chỉ mở rộng khi vuốt đúng góc 90 độ vào màn hình):
             if (activePanel != null)
             {
                 double targetWidth = 28.0 + (progress * 172.0);
-                if (dist > ShortcutUnlockThreshold)
+                if (isValidDirection && dist > ShortcutUnlockThreshold)
                 {
                     targetWidth += Math.Min(25.0, (dist - ShortcutUnlockThreshold) * 0.18);
                 }
@@ -1792,8 +1826,8 @@ namespace Two_UI_Lock_Screen
                 ShortcutDimOverlay.Opacity = progress * 0.35;
             }
 
-            // 4. Rung phản hồi haptic 1 lần khi vuốt đủ xa (vượt ngưỡng)
-            if (dist >= ShortcutUnlockThreshold)
+            // 4. Rung phản hồi haptic 1 lần khi vuốt đủ xa (vượt ngưỡng) và đúng trong góc 90 độ
+            if (isValidDirection && dist >= ShortcutUnlockThreshold)
             {
                 if (!_hasShortcutVibrated)
                 {
@@ -1822,12 +1856,18 @@ namespace Two_UI_Lock_Screen
                 _shortcutPressStory = null;
             }
 
-            double dist = Math.Sqrt(_shortcutDragX * _shortcutDragX + _shortcutDragY * _shortcutDragY);
+            double dist;
+            bool isValidDirection = IsInValidShortcutQuadrant(_shortcutDragX, _shortcutDragY, isRight, out dist);
+
             double vx = e.FinalVelocities.LinearVelocity.X;
             double vy = e.FinalVelocities.LinearVelocity.Y;
             double vel = Math.Sqrt(vx * vx + vy * vy);
-            bool isFlick = vel >= 800.0;
-            bool triggered = (dist >= ShortcutUnlockThreshold) || isFlick;
+
+            // Kiểm tra cử chỉ vuốt nhanh (Flick) cũng phải nằm trong góc phần tư 90 độ hợp lệ
+            double flickDist;
+            bool isValidFlick = (vel >= 800.0) && IsInValidShortcutQuadrant(vx, vy, isRight, out flickDist);
+
+            bool triggered = (isValidDirection && dist >= ShortcutUnlockThreshold) || isValidFlick;
 
             if (triggered)
             {
