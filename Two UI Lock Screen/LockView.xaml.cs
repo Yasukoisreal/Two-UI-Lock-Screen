@@ -3812,7 +3812,7 @@ namespace Two_UI_Lock_Screen
             await svc.SendSeekAsync(seekPos);
         }
 
-        private double _seekDragStartOriginX = 0;
+        private double _currentDragSeekX = 0;
 
         private void MusicSeekbarContainer_ManipulationStarted(object sender, ManipulationStartedEventArgs e)
         {
@@ -3821,14 +3821,40 @@ namespace Two_UI_Lock_Screen
             if (!svc.CanSeek || svc.DurationMs <= 0 || MusicSeekbarContainer == null) return;
 
             _isDraggingSeekbar = true;
-            _seekDragStartOriginX = e.ManipulationOrigin.X;
+
+            // Xác định toạ độ chạm thực tế trên MusicSeekbarContainer
+            Point startPt = e.ManipulationOrigin;
+            if (e.ManipulationContainer != null && e.ManipulationContainer != MusicSeekbarContainer)
+            {
+                try
+                {
+                    startPt = e.ManipulationContainer.TransformToVisual(MusicSeekbarContainer).Transform(e.ManipulationOrigin);
+                }
+                catch { }
+            }
+
+            double totalWidth = MusicSeekbarContainer.ActualWidth > 0 ? MusicSeekbarContainer.ActualWidth : 400.0;
+            double currentPlayedRatio = (svc.DurationMs > 0) ? Math.Max(0.0, Math.Min(1.0, (double)svc.PositionMs / svc.DurationMs)) : 0.0;
+            double currentThumbCenterX = currentPlayedRatio * totalWidth;
+
+            // Nếu người dùng chạm vào vùng gần nút tròn (trong bán kính 28px):
+            // Giữ nguyên con chạy ở vị trí đang phát, không giật dù chỉ 1 pixel!
+            if (Math.Abs(startPt.X - currentThumbCenterX) <= 28.0)
+            {
+                _currentDragSeekX = currentThumbCenterX;
+            }
+            else
+            {
+                // Nếu người dùng chạm vào rãnh ở xa nút tròn: nhảy tới vị trí ngón tay chạm
+                _currentDragSeekX = Math.Max(0.0, Math.Min(totalWidth, startPt.X));
+            }
 
             // Khi người dùng chạm kéo: tạm dừng hoạt ảnh sóng và chuyển sang hiển thị rãnh phẳng trong suốt thời gian kéo
             StopWaveAnimation();
             if (MusicSeekWaveCanvas != null) MusicSeekWaveCanvas.Visibility = Visibility.Collapsed;
             if (MusicSeekPlayedTrack != null) MusicSeekPlayedTrack.Visibility = Visibility.Visible;
 
-            UpdateSeekDragVisual(_seekDragStartOriginX);
+            UpdateSeekDragVisual(_currentDragSeekX);
         }
 
         private void MusicSeekbarContainer_ManipulationDelta(object sender, ManipulationDeltaEventArgs e)
@@ -3836,8 +3862,9 @@ namespace Two_UI_Lock_Screen
             e.Handled = true;
             if (!_isDraggingSeekbar || MusicSeekbarContainer == null) return;
 
-            double currentX = _seekDragStartOriginX + e.CumulativeManipulation.Translation.X;
-            UpdateSeekDragVisual(currentX);
+            // Di chuyển trực tiếp 1:1 theo delta ngón tay thực tế
+            _currentDragSeekX += e.DeltaManipulation.Translation.X;
+            UpdateSeekDragVisual(_currentDragSeekX);
         }
 
         private async void MusicSeekbarContainer_ManipulationCompleted(object sender, ManipulationCompletedEventArgs e)

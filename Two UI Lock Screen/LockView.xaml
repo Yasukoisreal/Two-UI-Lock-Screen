@@ -295,16 +295,16 @@
                                           ManipulationDelta="MusicSeekbarContainer_ManipulationDelta"
                                           ManipulationCompleted="MusicSeekbarContainer_ManipulationCompleted">
                                         <!-- Rãnh nền kính mờ chưa phát (Dày 10px từ Y=18 đến Y=28, CornerRadius 5 chuẩn Samsung One UI 6.1) -->
-                                        <Border Height="10" CornerRadius="5" Background="#45FFFFFF" BorderBrush="#25FFFFFF" BorderThickness="1"
+                                        <Border IsHitTestVisible="False" Height="10" CornerRadius="5" Background="#45FFFFFF" BorderBrush="#25FFFFFF" BorderThickness="1"
                                                 VerticalAlignment="Top" Margin="0,18,0,0" HorizontalAlignment="Stretch" />
                                         <!-- Rãnh tải đệm (Buffer Progress) màu trắng mờ chuẩn AOSP -->
-                                        <Border x:Name="MusicSeekBufferedTrack" Height="10" CornerRadius="5" Background="#55FFFFFF"
+                                        <Border x:Name="MusicSeekBufferedTrack" IsHitTestVisible="False" Height="10" CornerRadius="5" Background="#55FFFFFF"
                                                 VerticalAlignment="Top" Margin="0,18,0,0" HorizontalAlignment="Left" Width="0" />
                                         <!-- Rãnh tiến độ đã phát màu pastel sáng (Lớp đệm mút tròn ở đầu và phẳng khi tạm dừng) -->
-                                        <Border x:Name="MusicSeekPlayedTrack" Height="10" CornerRadius="5" Background="#F0FFFFFF"
+                                        <Border x:Name="MusicSeekPlayedTrack" IsHitTestVisible="False" Height="10" CornerRadius="5" Background="#F0FFFFFF"
                                                 VerticalAlignment="Top" Margin="0,18,0,0" HorizontalAlignment="Left" Width="0" />
                                         <!-- Rãnh tiến độ dạng sóng biển One UI 6.1 khi đang phát nhạc (2 lớp sóng biển chồng lên nhau) -->
-                                        <Canvas x:Name="MusicSeekWaveCanvas" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Width="0" Visibility="Collapsed">
+                                        <Canvas x:Name="MusicSeekWaveCanvas" IsHitTestVisible="False" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Width="0" Visibility="Collapsed">
                                             <!-- Đệm tròn bo mép trái: ẩn vì cung tròn ArcSegment được tích hợp trực tiếp vào hình học vector sóng -->
                                             <Border x:Name="MusicSeekWaveLeftCap" Width="10" Height="10" CornerRadius="5" Background="#F0FFFFFF" Canvas.Left="0" Canvas.Top="18" Visibility="Collapsed" />
                                             <!-- 1. Sóng biển lớn phía sau: sóng lớn hơn, trôi chậm hơn, màu trắng/pastel sáng nguyên khối -->
@@ -313,7 +313,7 @@
                                             <Path x:Name="MusicSeekWaveFrontPath" Fill="#DCBACEE0" />
                                         </Canvas>
                                         <!-- Nút trượt One UI Thumb tròn xoe 18x18 bo tròn 9, tâm trục khớp tại Y=23 cùng tâm rãnh -->
-                                        <Border x:Name="MusicSeekThumb" Width="18" Height="18" CornerRadius="9" Background="#F8E2F1FD"
+                                        <Border x:Name="MusicSeekThumb" IsHitTestVisible="False" Width="18" Height="18" CornerRadius="9" Background="#F8E2F1FD"
                                                 VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,14,0,0" />
                                     </Grid>
 
