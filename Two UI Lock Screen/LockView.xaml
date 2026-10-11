@@ -196,10 +196,10 @@
                             </StackPanel.RenderTransform>
                             <!-- Hàng 1: Icon nốt nhạc / App icon + 'Điện thoại này' -->
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,2">
-                                <Grid Width="13" Height="13" VerticalAlignment="Center" Margin="0,0,5,0">
-                                    <Image x:Name="MusicAppIconCollapsed" Stretch="Uniform" Visibility="Collapsed" />
+                                <Grid Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,5,0">
+                                    <Image x:Name="MusicAppIconCollapsed" Source="/Assets/Icons/ic_music_app_default.png" Stretch="Uniform" Visibility="Visible" />
                                     <TextBlock x:Name="MusicAppGlyphCollapsed" Text="&#xE189;" FontFamily="Segoe UI Symbol" FontSize="10" Foreground="#C0D0DC"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
                                 </Grid>
                                 <TextBlock x:Name="MusicAudioOutputCollapsed" Text="Điện thoại này" FontSize="11.5" Foreground="#C0D0DC"
                                            FontFamily="{StaticResource SamsungSans}" VerticalAlignment="Center" />
@@ -222,18 +222,26 @@
                             </StackPanel.RenderTransform>
                             <!-- Nút Lùi bài -->
                             <Border x:Name="MusicPrevBtnCollapsed" Width="32" Height="34" Background="Transparent" Tap="MusicPrev_Tap">
-                                <TextBlock Text="&#xE100;" FontFamily="Segoe UI Symbol" FontSize="16" Foreground="#FFFFFE"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <Path Data="M14.029,11.6C14.792,11.6 15.408,12.164 15.408,12.86L15.408,18.866C15.433,18.849 15.448,18.831 15.474,18.816L25.137,12.277C25.423,12.107 25.721,12.02 26.019,12.02C26.683,12.02 27.35,12.487 27.35,13.381L27.35,26.619C27.35,27.513 26.683,27.98 26.019,27.98C25.721,27.98 25.425,27.894 25.137,27.723L15.474,21.183C15.448,21.168 15.433,21.149 15.408,21.134L15.408,27.14C15.408,27.836 14.792,28.4 14.029,28.4C13.268,28.4 12.65,27.836 12.65,27.14L12.65,12.86C12.65,12.164 13.268,11.6 14.029,11.6"
+                                      Fill="#FFFFFE" Stretch="Uniform" Width="14" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                             <!-- Nút Play/Pause -->
                             <Border x:Name="MusicPlayPauseBtnCollapsed" Width="36" Height="34" Background="Transparent" Tap="MusicPlayPause_Tap" Margin="4,0,4,0">
-                                <TextBlock x:Name="MusicPlayPauseIconCollapsed" Text="&#xE103;" FontFamily="Segoe UI Symbol" FontSize="18" Foreground="#FFFFFE"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Path x:Name="MusicPlayIconCollapsed"
+                                          Data="M32.09,21.634L13.082,33.854C11.967,34.57 10.483,34.248 9.766,33.133C9.517,32.745 9.385,32.295 9.385,31.835L9.385,7.396C9.385,6.071 10.459,4.996 11.785,4.996C12.245,4.996 12.695,5.128 13.082,5.377L32.09,17.597C33.205,18.313 33.528,19.798 32.811,20.913C32.625,21.202 32.38,21.448 32.09,21.634Z"
+                                          Fill="#FFFFFE" Stretch="Uniform" Width="16" Height="16" Margin="1,0,0,0"
+                                          Visibility="Collapsed" />
+                                    <Path x:Name="MusicPauseIconCollapsed"
+                                          Data="M14.368,9.433L14.368,9.433C12.984,9.433 11.855,10.564 11.855,11.945L11.855,28.054C11.855,29.436 12.984,30.567 14.368,30.567C15.751,30.567 16.88,29.436 16.88,28.054L16.88,11.945C16.88,10.564 15.751,9.433 14.368,9.433M25.632,9.433L25.632,9.433C24.249,9.433 23.12,10.564 23.12,11.945L23.12,28.054C23.12,29.436 24.249,30.567 25.632,30.567C27.015,30.567 28.145,29.436 28.145,28.054L28.145,11.945C28.145,10.564 27.015,9.433 25.632,9.433"
+                                          Fill="#FFFFFE" Stretch="Uniform" Width="15" Height="15"
+                                          Visibility="Visible" />
+                                </Grid>
                             </Border>
                             <!-- Nút Chuyển bài -->
                             <Border x:Name="MusicNextBtnCollapsed" Width="32" Height="34" Background="Transparent" Tap="MusicNext_Tap">
-                                <TextBlock Text="&#xE101;" FontFamily="Segoe UI Symbol" FontSize="16" Foreground="#FFFFFE"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <Path Data="M25.971,11.6C25.208,11.6 24.592,12.164 24.592,12.86L24.592,18.866C24.567,18.849 24.552,18.831 24.526,18.816L14.863,12.277C14.577,12.107 14.279,12.02 13.981,12.02C13.317,12.02 12.65,12.487 12.65,13.381L12.65,26.619C12.65,27.513 13.317,27.98 13.981,27.98C14.279,27.98 14.575,27.894 14.863,27.723L24.526,21.183C24.552,21.168 24.567,21.149 24.592,21.134L24.592,27.14C24.592,27.836 25.208,28.4 25.971,28.4C26.732,28.4 27.35,27.836 27.35,27.14L27.35,12.86C27.35,12.164 26.732,11.6 25.971,11.6"
+                                      Fill="#FFFFFE" Stretch="Uniform" Width="14" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                         </StackPanel>
 
@@ -323,31 +331,46 @@
                                     <Border x:Name="MusicLeftActionBtn" Grid.Column="0" Height="34" Background="Transparent" Tap="MusicFavorite_Tap">
                                         <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
                                             <Image x:Name="MusicLeftActionImage" Width="18" Height="18" Stretch="Uniform" Visibility="Collapsed" />
-                                            <TextBlock x:Name="MusicHeartIcon" Text="&#xE006;" FontFamily="Segoe UI Symbol" FontSize="17" Foreground="#FFFFFE"
-                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            <Path x:Name="MusicHeartPath"
+                                                  Data="M11.987,8.507C11.987,8.507 11.842,8.729 11.788,8.802C11.262,9.534 9.837,10.809 8.893,11.618C8.378,12.061 7.624,12.061 7.108,11.618C6.164,10.809 4.74,9.533 4.215,8.802C4.162,8.729 4.014,8.507 4.014,8.507C3.792,8.124 3.662,7.671 3.662,7.187C3.662,5.793 4.729,4.662 6.047,4.662C6.856,4.662 7.567,5.088 8.001,5.738C8.431,5.087 9.145,4.662 9.952,4.662C11.271,4.662 12.338,5.793 12.338,7.187C12.341,7.671 12.212,8.124 11.987,8.507Z"
+                                                  Fill="#FFFFFE" Stretch="Uniform" Width="18" Height="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            <TextBlock x:Name="MusicHeartIcon" FontFamily="Segoe UI Symbol" FontSize="17" Foreground="#FFFFFE"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
                                         </Grid>
                                     </Border>
                                     <!-- 2. Lùi bài -->
                                     <Border x:Name="MusicPrevBtnExpanded" Grid.Column="1" Height="34" Background="Transparent" Tap="MusicPrev_Tap">
-                                        <TextBlock Text="&#xE100;" FontFamily="Segoe UI Symbol" FontSize="19" Foreground="#FFFFFE"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <Path Data="M14.029,11.6C14.792,11.6 15.408,12.164 15.408,12.86L15.408,18.866C15.433,18.849 15.448,18.831 15.474,18.816L25.137,12.277C25.423,12.107 25.721,12.02 26.019,12.02C26.683,12.02 27.35,12.487 27.35,13.381L27.35,26.619C27.35,27.513 26.683,27.98 26.019,27.98C25.721,27.98 25.425,27.894 25.137,27.723L15.474,21.183C15.448,21.168 15.433,21.149 15.408,21.134L15.408,27.14C15.408,27.836 14.792,28.4 14.029,28.4C13.268,28.4 12.65,27.836 12.65,27.14L12.65,12.86C12.65,12.164 13.268,11.6 14.029,11.6"
+                                              Fill="#FFFFFE" Stretch="Uniform" Width="18" Height="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                     </Border>
                                     <!-- 3. Play/Pause -->
                                     <Border x:Name="MusicPlayPauseBtnExpanded" Grid.Column="2" Height="34" Background="Transparent" Tap="MusicPlayPause_Tap">
-                                        <TextBlock x:Name="MusicPlayPauseIconExpanded" Text="&#xE103;" FontFamily="Segoe UI Symbol" FontSize="23" Foreground="#FFFFFE"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Path x:Name="MusicPlayIconExpanded"
+                                                  Data="M32.09,21.634L13.082,33.854C11.967,34.57 10.483,34.248 9.766,33.133C9.517,32.745 9.385,32.295 9.385,31.835L9.385,7.396C9.385,6.071 10.459,4.996 11.785,4.996C12.245,4.996 12.695,5.128 13.082,5.377L32.09,17.597C33.205,18.313 33.528,19.798 32.811,20.913C32.625,21.202 32.38,21.448 32.09,21.634Z"
+                                                  Fill="#FFFFFE" Stretch="Uniform" Width="21" Height="21" Margin="2,0,0,0"
+                                                  Visibility="Collapsed" />
+                                            <Path x:Name="MusicPauseIconExpanded"
+                                                  Data="M14.368,9.433L14.368,9.433C12.984,9.433 11.855,10.564 11.855,11.945L11.855,28.054C11.855,29.436 12.984,30.567 14.368,30.567C15.751,30.567 16.88,29.436 16.88,28.054L16.88,11.945C16.88,10.564 15.751,9.433 14.368,9.433M25.632,9.433L25.632,9.433C24.249,9.433 23.12,10.564 23.12,11.945L23.12,28.054C23.12,29.436 24.249,30.567 25.632,30.567C27.015,30.567 28.145,29.436 28.145,28.054L28.145,11.945C28.145,10.564 27.015,9.433 25.632,9.433"
+                                                  Fill="#FFFFFE" Stretch="Uniform" Width="20" Height="20"
+                                                  Visibility="Visible" />
+                                        </Grid>
                                     </Border>
                                     <!-- 4. Kế tiếp -->
                                     <Border x:Name="MusicNextBtnExpanded" Grid.Column="3" Height="34" Background="Transparent" Tap="MusicNext_Tap">
-                                        <TextBlock Text="&#xE101;" FontFamily="Segoe UI Symbol" FontSize="19" Foreground="#FFFFFE"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <Path Data="M25.971,11.6C25.208,11.6 24.592,12.164 24.592,12.86L24.592,18.866C24.567,18.849 24.552,18.831 24.526,18.816L14.863,12.277C14.577,12.107 14.279,12.02 13.981,12.02C13.317,12.02 12.65,12.487 12.65,13.381L12.65,26.619C12.65,27.513 13.317,27.98 13.981,27.98C14.279,27.98 14.575,27.894 14.863,27.723L24.526,21.183C24.552,21.168 24.567,21.149 24.592,21.134L24.592,27.14C24.592,27.836 25.208,28.4 25.971,28.4C26.732,28.4 27.35,27.836 27.35,27.14L27.35,12.86C27.35,12.164 26.732,11.6 25.971,11.6"
+                                              Fill="#FFFFFE" Stretch="Uniform" Width="18" Height="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                     </Border>
                                     <!-- 5. Nút tùy biến bên phải (Slot 5: Mặc định Trộn bài) -->
                                     <Border x:Name="MusicRightActionBtn" Grid.Column="4" Height="34" Background="Transparent" Tap="MusicShuffle_Tap">
                                         <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <Image x:Name="MusicRightActionImage" Width="18" Height="18" Stretch="Uniform" Visibility="Collapsed" />
-                                            <TextBlock x:Name="MusicShuffleIcon" Text="&#xE148;" FontFamily="Segoe UI Symbol" FontSize="17" Foreground="#FFFFFE"
-                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            <Image x:Name="MusicRightActionImage" Source="/Assets/Icons/ic_music_shuffle.png" Width="18" Height="18" Stretch="Uniform" Visibility="Visible" />
+                                            <Path x:Name="MusicRightHeartPath"
+                                                  Data="M11.987,8.507C11.987,8.507 11.842,8.729 11.788,8.802C11.262,9.534 9.837,10.809 8.893,11.618C8.378,12.061 7.624,12.061 7.108,11.618C6.164,10.809 4.74,9.533 4.215,8.802C4.162,8.729 4.014,8.507 4.014,8.507C3.792,8.124 3.662,7.671 3.662,7.187C3.662,5.793 4.729,4.662 6.047,4.662C6.856,4.662 7.567,5.088 8.001,5.738C8.431,5.087 9.145,4.662 9.952,4.662C11.271,4.662 12.338,5.793 12.338,7.187C12.341,7.671 12.212,8.124 11.987,8.507Z"
+                                                  Fill="#FFFFFE" Stretch="Uniform" Width="18" Height="18" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  Visibility="Collapsed" />
+                                            <TextBlock x:Name="MusicShuffleIcon" FontFamily="Segoe UI Symbol" FontSize="17" Foreground="#FFFFFE"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
                                         </Grid>
                                     </Border>
                                 </Grid>

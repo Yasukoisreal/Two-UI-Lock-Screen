@@ -3698,9 +3698,16 @@ namespace Two_UI_Lock_Screen
             {
                 if (string.IsNullOrEmpty(appIconUrl))
                 {
-                    _currentAppIconKey = null;
-                    if (MusicAppIconCollapsed != null) { MusicAppIconCollapsed.Source = null; MusicAppIconCollapsed.Visibility = Visibility.Collapsed; }
-                    if (MusicAppGlyphCollapsed != null) MusicAppGlyphCollapsed.Visibility = Visibility.Visible;
+                    if (_currentAppIconKey != "")
+                    {
+                        _currentAppIconKey = "";
+                        if (MusicAppIconCollapsed != null)
+                        {
+                            MusicAppIconCollapsed.Source = new BitmapImage(new Uri("/Assets/Icons/ic_music_app_default.png", UriKind.Relative));
+                            MusicAppIconCollapsed.Visibility = Visibility.Visible;
+                        }
+                        if (MusicAppGlyphCollapsed != null) MusicAppGlyphCollapsed.Visibility = Visibility.Collapsed;
+                    }
                     return;
                 }
 
@@ -3730,8 +3737,12 @@ namespace Two_UI_Lock_Screen
             }
             catch
             {
-                if (MusicAppIconCollapsed != null) { MusicAppIconCollapsed.Source = null; MusicAppIconCollapsed.Visibility = Visibility.Collapsed; }
-                if (MusicAppGlyphCollapsed != null) MusicAppGlyphCollapsed.Visibility = Visibility.Visible;
+                if (MusicAppIconCollapsed != null)
+                {
+                    MusicAppIconCollapsed.Source = new BitmapImage(new Uri("/Assets/Icons/ic_music_app_default.png", UriKind.Relative));
+                    MusicAppIconCollapsed.Visibility = Visibility.Visible;
+                }
+                if (MusicAppGlyphCollapsed != null) MusicAppGlyphCollapsed.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -3744,6 +3755,8 @@ namespace Two_UI_Lock_Screen
                 StopWaveAnimation();
                 UpdateMusicAppIcon(null);
                 ResetMusicSeekPalette();
+                if (MusicHeartPath != null) MusicHeartPath.Visibility = Visibility.Collapsed;
+                if (MusicRightHeartPath != null) MusicRightHeartPath.Visibility = Visibility.Collapsed;
                 if (MusicLeftActionImage != null) { MusicLeftActionImage.Source = null; MusicLeftActionImage.Visibility = Visibility.Collapsed; }
                 if (MusicRightActionImage != null) { MusicRightActionImage.Source = null; MusicRightActionImage.Visibility = Visibility.Collapsed; }
                 return;
@@ -3902,10 +3915,12 @@ namespace Two_UI_Lock_Screen
 
             MusicArtistCollapsed.Text = artistDisplay;
 
-            // Nút Play / Pause: \uE103 (Pause), \uE102 (Play)
-            string playIcon = svc.IsPlaying ? "\uE103" : "\uE102";
-            MusicPlayPauseIconCollapsed.Text = playIcon;
-            MusicPlayPauseIconExpanded.Text = playIcon;
+            // Cập nhật nút Play / Pause dạng vector chính thức Samsung One UI 6.1
+            bool isPlaying = svc.IsPlaying;
+            if (MusicPlayIconCollapsed != null) MusicPlayIconCollapsed.Visibility = isPlaying ? Visibility.Collapsed : Visibility.Visible;
+            if (MusicPauseIconCollapsed != null) MusicPauseIconCollapsed.Visibility = isPlaying ? Visibility.Visible : Visibility.Collapsed;
+            if (MusicPlayIconExpanded != null) MusicPlayIconExpanded.Visibility = isPlaying ? Visibility.Collapsed : Visibility.Visible;
+            if (MusicPauseIconExpanded != null) MusicPauseIconExpanded.Visibility = isPlaying ? Visibility.Visible : Visibility.Collapsed;
 
             // Cập nhật độ mờ nút Play / Pause theo cờ năng lực chuẩn PlaybackState.Actions
             bool canTogglePlay = svc.IsPlaying ? svc.CanPause : svc.CanPlay;
@@ -3922,8 +3937,8 @@ namespace Two_UI_Lock_Screen
             if (MusicNextBtnExpanded != null) MusicNextBtnExpanded.Opacity = nextOpacity;
 
             // Cập nhật các nút tùy biến (CustomActions) chuẩn Android PlaybackState.CustomAction
-            ApplyCustomActionButton(MusicHeartIcon, MusicLeftActionImage, svc.LeftAction, true);
-            ApplyCustomActionButton(MusicShuffleIcon, MusicRightActionImage, svc.RightAction, false);
+            ApplyCustomActionButton(MusicHeartIcon, MusicLeftActionImage, MusicHeartPath, svc.LeftAction, true);
+            ApplyCustomActionButton(MusicShuffleIcon, MusicRightActionImage, MusicRightHeartPath, svc.RightAction, false);
             isFavorite = svc.IsFavorite;
             isShuffle = svc.IsShuffle;
 
@@ -4484,10 +4499,11 @@ namespace Two_UI_Lock_Screen
             await MusicWidgetService.Instance.SendSkipPrevAsync();
         }
 
-        private void ApplyCustomActionButton(TextBlock textBlock, Image imageControl, CustomActionModel action, bool isLeftDefault)
+        private void ApplyCustomActionButton(TextBlock textBlock, Image imageControl, System.Windows.Shapes.Path pathControl, CustomActionModel action, bool isLeftDefault)
         {
             if (action == null)
             {
+                if (pathControl != null) pathControl.Visibility = Visibility.Collapsed;
                 if (textBlock != null) textBlock.Visibility = Visibility.Collapsed;
                 if (imageControl != null) { imageControl.Source = null; imageControl.Visibility = Visibility.Collapsed; }
                 return;
@@ -4495,6 +4511,7 @@ namespace Two_UI_Lock_Screen
 
             string icon = (action.Icon ?? "").Trim();
             string actionName = (action.Action ?? "").ToLowerInvariant().Trim();
+            string iconLower = icon.ToLowerInvariant();
 
             // Nếu icon là một URL HTTP hoặc đường dẫn ảnh PNG nhị phân từ app nhạc
             if (icon.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
@@ -4511,7 +4528,8 @@ namespace Two_UI_Lock_Screen
                         {
                             imageControl.Source = new BitmapImage(imgUri);
                             imageControl.Visibility = Visibility.Visible;
-                            imageControl.Opacity = action.IsActive ? 1.0 : 0.7;
+                            imageControl.Opacity = action.IsActive ? 1.0 : 0.65;
+                            if (pathControl != null) pathControl.Visibility = Visibility.Collapsed;
                             if (textBlock != null) textBlock.Visibility = Visibility.Collapsed;
                             return;
                         }
@@ -4520,7 +4538,104 @@ namespace Two_UI_Lock_Screen
                 }
             }
 
-            // Nếu không phải ảnh URL, ẩn Image và dùng TextBlock Segoe UI Symbol
+            // 1. Favorite / Like / Heart (hoặc isLeftDefault khi action rỗng/mặc định)
+            if (iconLower == "heart" || iconLower == "favorite" || iconLower == "like" || actionName.Contains("favorite") || (isLeftDefault && string.IsNullOrEmpty(icon) && string.IsNullOrEmpty(actionName)))
+            {
+                if (pathControl != null)
+                {
+                    pathControl.Visibility = Visibility.Visible;
+                    pathControl.Fill = action.IsActive 
+                        ? new SolidColorBrush(Color.FromArgb(255, 255, 75, 75)) // Đỏ One UI
+                        : new SolidColorBrush(Color.FromArgb(208, 255, 255, 255));
+                    if (imageControl != null) { imageControl.Source = null; imageControl.Visibility = Visibility.Collapsed; }
+                    if (textBlock != null) textBlock.Visibility = Visibility.Collapsed;
+                    return;
+                }
+            }
+
+            // Nếu không dùng Heart Path, ẩn Path
+            if (pathControl != null) pathControl.Visibility = Visibility.Collapsed;
+
+            // 2. Shuffle (Trộn bài) (hoặc !isLeftDefault khi action rỗng/mặc định)
+            if (iconLower == "shuffle" || actionName.Contains("shuffle") || (!isLeftDefault && string.IsNullOrEmpty(icon) && string.IsNullOrEmpty(actionName)))
+            {
+                if (imageControl != null)
+                {
+                    imageControl.Source = new BitmapImage(new Uri("/Assets/Icons/ic_music_shuffle.png", UriKind.Relative));
+                    imageControl.Opacity = action.IsActive ? 1.0 : 0.45;
+                    imageControl.Visibility = Visibility.Visible;
+                    if (textBlock != null) textBlock.Visibility = Visibility.Collapsed;
+                    return;
+                }
+            }
+            // 3. Repeat (Lặp lại danh sách / Lặp 1 bài theo chuẩn 3 nấc AOSP AndroidRepeatMode)
+            else if (iconLower == "repeat" || iconLower == "repeat_one" || iconLower == "repeat1" || actionName.Contains("repeat"))
+            {
+                var svc = MusicWidgetService.Instance;
+                string repeatAsset = (svc.RepeatMode == AndroidRepeatMode.REPEAT_MODE_ONE || iconLower == "repeat_one" || iconLower == "repeat1")
+                    ? "/Assets/Icons/ic_music_repeat_one.png"
+                    : "/Assets/Icons/ic_music_repeat.png";
+                bool isActive = (svc.RepeatMode == AndroidRepeatMode.REPEAT_MODE_ONE || svc.RepeatMode == AndroidRepeatMode.REPEAT_MODE_ALL || action.IsActive);
+
+                if (imageControl != null)
+                {
+                    imageControl.Source = new BitmapImage(new Uri(repeatAsset, UriKind.Relative));
+                    imageControl.Opacity = isActive ? 1.0 : 0.45;
+                    imageControl.Visibility = Visibility.Visible;
+                    if (textBlock != null) textBlock.Visibility = Visibility.Collapsed;
+                    return;
+                }
+            }
+            // 4. Thumbs Up
+            else if (iconLower == "thumbs_up" || iconLower == "thumb_up" || actionName.Contains("thumbs_up"))
+            {
+                if (imageControl != null)
+                {
+                    imageControl.Source = new BitmapImage(new Uri("/Assets/Icons/ic_music_thumb_up.png", UriKind.Relative));
+                    imageControl.Opacity = action.IsActive ? 1.0 : 0.45;
+                    imageControl.Visibility = Visibility.Visible;
+                    if (textBlock != null) textBlock.Visibility = Visibility.Collapsed;
+                    return;
+                }
+            }
+            // 5. Thumbs Down
+            else if (iconLower == "thumbs_down" || iconLower == "thumb_down" || actionName.Contains("thumbs_down"))
+            {
+                if (imageControl != null)
+                {
+                    imageControl.Source = new BitmapImage(new Uri("/Assets/Icons/ic_music_thumb_down.png", UriKind.Relative));
+                    imageControl.Opacity = action.IsActive ? 1.0 : 0.45;
+                    imageControl.Visibility = Visibility.Visible;
+                    if (textBlock != null) textBlock.Visibility = Visibility.Collapsed;
+                    return;
+                }
+            }
+            // 6. Rewind (Tua lùi)
+            else if (iconLower.StartsWith("rewind") || iconLower.StartsWith("replay") || actionName.Contains("rewind"))
+            {
+                if (imageControl != null)
+                {
+                    imageControl.Source = new BitmapImage(new Uri("/Assets/Icons/ic_music_rewind.png", UriKind.Relative));
+                    imageControl.Opacity = action.IsActive ? 1.0 : 0.75;
+                    imageControl.Visibility = Visibility.Visible;
+                    if (textBlock != null) textBlock.Visibility = Visibility.Collapsed;
+                    return;
+                }
+            }
+            // 7. Fast Forward (Tua tới)
+            else if (iconLower.StartsWith("forward") || iconLower.StartsWith("fast_forward") || actionName.Contains("fast_forward"))
+            {
+                if (imageControl != null)
+                {
+                    imageControl.Source = new BitmapImage(new Uri("/Assets/Icons/ic_music_forward.png", UriKind.Relative));
+                    imageControl.Opacity = action.IsActive ? 1.0 : 0.75;
+                    imageControl.Visibility = Visibility.Visible;
+                    if (textBlock != null) textBlock.Visibility = Visibility.Collapsed;
+                    return;
+                }
+            }
+
+            // Fallback: nếu không khớp các icon Samsung chuẩn trên, dùng TextBlock Segoe UI Symbol
             if (imageControl != null)
             {
                 imageControl.Visibility = Visibility.Collapsed;
@@ -4530,85 +4645,19 @@ namespace Two_UI_Lock_Screen
             if (textBlock == null) return;
             textBlock.Visibility = Visibility.Visible;
 
-            string iconLower = icon.ToLowerInvariant();
-
-            // 1. Favorite / Like / Heart
-            if (iconLower == "heart" || iconLower == "favorite" || iconLower == "like" || actionName.Contains("favorite"))
-            {
-                textBlock.Text = action.IsActive ? "\uE00B" : "\uE006";
-                textBlock.Foreground = action.IsActive 
-                    ? new SolidColorBrush(Color.FromArgb(255, 255, 75, 75)) // Đỏ One UI
-                    : new SolidColorBrush(Color.FromArgb(208, 255, 255, 255));
-            }
-            // 2. Shuffle (Trộn bài)
-            else if (iconLower == "shuffle" || actionName.Contains("shuffle"))
-            {
-                textBlock.Text = "\uE148";
-                textBlock.Foreground = action.IsActive 
-                    ? new SolidColorBrush(Color.FromArgb(255, 112, 166, 222)) // Xanh One UI
-                    : new SolidColorBrush(Color.FromArgb(208, 255, 255, 255));
-            }
-            // 3. Repeat (Lặp lại danh sách / Lặp 1 bài theo chuẩn 3 nấc AOSP AndroidRepeatMode)
-            else if (iconLower == "repeat" || iconLower == "repeat_one" || iconLower == "repeat1" || actionName.Contains("repeat"))
-            {
-                var svc = MusicWidgetService.Instance;
-                if (svc.RepeatMode == AndroidRepeatMode.REPEAT_MODE_ONE || iconLower == "repeat_one" || iconLower == "repeat1")
-                {
-                    textBlock.Text = "\uE1CC"; // Loop arrow with 1
-                    textBlock.Foreground = new SolidColorBrush(Color.FromArgb(255, 112, 166, 222)); // Xanh One UI
-                }
-                else if (svc.RepeatMode == AndroidRepeatMode.REPEAT_MODE_ALL || action.IsActive)
-                {
-                    textBlock.Text = "\uE1CD"; // Loop arrows
-                    textBlock.Foreground = new SolidColorBrush(Color.FromArgb(255, 112, 166, 222)); // Xanh One UI
-                }
-                else
-                {
-                    textBlock.Text = "\uE1CD"; // Loop arrows
-                    textBlock.Foreground = new SolidColorBrush(Color.FromArgb(208, 255, 255, 255)); // Mờ
-                }
-            }
-            // 5. Thumbs Up
-            else if (iconLower == "thumbs_up" || iconLower == "thumb_up" || actionName.Contains("thumbs_up"))
-            {
-                textBlock.Text = "\uE19F";
-                textBlock.Foreground = action.IsActive 
-                    ? new SolidColorBrush(Color.FromArgb(255, 112, 166, 222)) 
-                    : new SolidColorBrush(Color.FromArgb(208, 255, 255, 255));
-            }
-            // 6. Thumbs Down
-            else if (iconLower == "thumbs_down" || iconLower == "thumb_down" || actionName.Contains("thumbs_down"))
-            {
-                textBlock.Text = "\uE19E";
-                textBlock.Foreground = action.IsActive 
-                    ? new SolidColorBrush(Color.FromArgb(255, 255, 75, 75)) 
-                    : new SolidColorBrush(Color.FromArgb(208, 255, 255, 255));
-            }
-            // 7. Rewind (Tua lùi)
-            else if (iconLower.StartsWith("rewind") || iconLower.StartsWith("replay") || actionName.Contains("rewind"))
-            {
-                textBlock.Text = "\uE110";
-                textBlock.Foreground = new SolidColorBrush(Color.FromArgb(208, 255, 255, 255));
-            }
-            // 8. Fast Forward (Tua tới)
-            else if (iconLower.StartsWith("forward") || iconLower.StartsWith("fast_forward") || actionName.Contains("fast_forward"))
-            {
-                textBlock.Text = "\uE111";
-                textBlock.Foreground = new SolidColorBrush(Color.FromArgb(208, 255, 255, 255));
-            }
-            // 9. Stop
-            else if (iconLower == "stop" || actionName.Contains("stop"))
+            // Stop
+            if (iconLower == "stop" || actionName.Contains("stop"))
             {
                 textBlock.Text = "\uE15B";
                 textBlock.Foreground = new SolidColorBrush(Color.FromArgb(208, 255, 255, 255));
             }
-            // 10. Queue / Playlist
+            // Queue / Playlist
             else if (iconLower == "queue" || iconLower == "playlist" || iconLower == "list")
             {
                 textBlock.Text = "\uE14C";
                 textBlock.Foreground = new SolidColorBrush(Color.FromArgb(208, 255, 255, 255));
             }
-            // 11. Mute / Volume
+            // Mute / Volume
             else if (iconLower == "mute" || iconLower == "volume")
             {
                 textBlock.Text = "\uE15D";
@@ -4616,15 +4665,15 @@ namespace Two_UI_Lock_Screen
                     ? new SolidColorBrush(Color.FromArgb(255, 255, 75, 75)) 
                     : new SolidColorBrush(Color.FromArgb(208, 255, 255, 255));
             }
-            // 12. Star Rating (Chuẩn AOSP Rating: RATING_3_STARS, RATING_4_STARS, RATING_5_STARS)
+            // Star Rating (Chuẩn AOSP Rating: RATING_3_STARS, RATING_4_STARS, RATING_5_STARS)
             else if (iconLower == "star" || iconLower.StartsWith("star") || actionName.Contains("star"))
             {
-                textBlock.Text = action.IsActive ? "\uE1CF" : "\uE224"; // Segoe UI Symbol: Star filled / outline
+                textBlock.Text = action.IsActive ? "\uE1CF" : "\uE224";
                 textBlock.Foreground = action.IsActive 
                     ? new SolidColorBrush(Color.FromArgb(255, 255, 215, 0)) // Vàng sao One UI (#FFD700)
                     : new SolidColorBrush(Color.FromArgb(208, 255, 255, 255));
             }
-            // 13. Ký tự Unicode đơn lẻ
+            // Ký tự Unicode đơn lẻ
             else if (!string.IsNullOrEmpty(icon) && icon.Length == 1)
             {
                 textBlock.Text = icon;
@@ -4632,23 +4681,11 @@ namespace Two_UI_Lock_Screen
                     ? new SolidColorBrush(Color.FromArgb(255, 112, 166, 222)) 
                     : new SolidColorBrush(Color.FromArgb(208, 255, 255, 255));
             }
-            // 14. Mặc định theo vị trí
+            // Mặc định
             else
             {
-                if (isLeftDefault)
-                {
-                    textBlock.Text = action.IsActive ? "\uE00B" : "\uE006";
-                    textBlock.Foreground = action.IsActive 
-                        ? new SolidColorBrush(Color.FromArgb(255, 255, 75, 75)) 
-                        : new SolidColorBrush(Color.FromArgb(208, 255, 255, 255));
-                }
-                else
-                {
-                    textBlock.Text = "\uE148";
-                    textBlock.Foreground = action.IsActive 
-                        ? new SolidColorBrush(Color.FromArgb(255, 112, 166, 222)) 
-                        : new SolidColorBrush(Color.FromArgb(208, 255, 255, 255));
-                }
+                textBlock.Text = "\uE10C";
+                textBlock.Foreground = new SolidColorBrush(Color.FromArgb(208, 255, 255, 255));
             }
         }
 
@@ -4662,14 +4699,14 @@ namespace Two_UI_Lock_Screen
             if (act.Action == AndroidCustomActions.ACTION_REPEAT || act.Action.IndexOf("repeat", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 await svc.CycleRepeatModeAsync();
-                ApplyCustomActionButton(MusicHeartIcon, MusicLeftActionImage, act, true);
+                ApplyCustomActionButton(MusicHeartIcon, MusicLeftActionImage, MusicHeartPath, act, true);
                 return;
             }
 
             if (act.Action == AndroidCustomActions.ACTION_SHUFFLE || act.Action.IndexOf("shuffle", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 await svc.CycleShuffleModeAsync();
-                ApplyCustomActionButton(MusicHeartIcon, MusicLeftActionImage, act, true);
+                ApplyCustomActionButton(MusicHeartIcon, MusicLeftActionImage, MusicHeartPath, act, true);
                 return;
             }
 
@@ -4677,7 +4714,7 @@ namespace Two_UI_Lock_Screen
             act.IsActive = nextState;
             if (act.Action == AndroidCustomActions.ACTION_FAVORITE) isFavorite = nextState;
 
-            ApplyCustomActionButton(MusicHeartIcon, MusicLeftActionImage, act, true);
+            ApplyCustomActionButton(MusicHeartIcon, MusicLeftActionImage, MusicHeartPath, act, true);
             await svc.ExecuteCustomActionAsync(act, nextState);
         }
 
@@ -4691,14 +4728,14 @@ namespace Two_UI_Lock_Screen
             if (act.Action == AndroidCustomActions.ACTION_REPEAT || act.Action.IndexOf("repeat", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 await svc.CycleRepeatModeAsync();
-                ApplyCustomActionButton(MusicShuffleIcon, MusicRightActionImage, act, false);
+                ApplyCustomActionButton(MusicShuffleIcon, MusicRightActionImage, MusicRightHeartPath, act, false);
                 return;
             }
 
             if (act.Action == AndroidCustomActions.ACTION_SHUFFLE || act.Action.IndexOf("shuffle", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 await svc.CycleShuffleModeAsync();
-                ApplyCustomActionButton(MusicShuffleIcon, MusicRightActionImage, act, false);
+                ApplyCustomActionButton(MusicShuffleIcon, MusicRightActionImage, MusicRightHeartPath, act, false);
                 return;
             }
 
@@ -4706,7 +4743,7 @@ namespace Two_UI_Lock_Screen
             act.IsActive = nextState;
             if (act.Action == AndroidCustomActions.ACTION_SHUFFLE) isShuffle = nextState;
 
-            ApplyCustomActionButton(MusicShuffleIcon, MusicRightActionImage, act, false);
+            ApplyCustomActionButton(MusicShuffleIcon, MusicRightActionImage, MusicRightHeartPath, act, false);
             await svc.ExecuteCustomActionAsync(act, nextState);
         }
 
