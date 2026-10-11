@@ -260,7 +260,7 @@
                             <TextBlock Text="Đầu ra media" FontSize="11" Foreground="#FFFFFE" FontFamily="{StaticResource SamsungSans}" VerticalAlignment="Center" />
                         </Border>
 
-                        <!-- NÚT MŨI TÊN ĐIỀU HƯỚNG GÓC TRÊN BÊN PHẢI (Vector chính thức Samsung One UI 6.1 SystemUI arrow_enabled_down) -->
+                        <!-- NÚT MŨI TÊN ĐIỀU HƯỚNG GÓC TRÊN BÊN PHẢI (Vector chính thức Samsung One UI 6.1 SystemUI arrow_enabled_down scale 0.6x) -->
                         <Border x:Name="MusicArrowBtn" Width="32" Height="32"
                                 HorizontalAlignment="Right" VerticalAlignment="Top"
                                 Margin="0,8,8,0" Background="Transparent"
@@ -270,8 +270,8 @@
                                     <CompositeTransform x:Name="MusicArrowTransform" CenterX="12" CenterY="12" Rotation="0" />
                                 </Grid.RenderTransform>
                                 <Path x:Name="MusicArrowPath"
-                                      Data="M20.382,7.962L12.712,15.74C12.32,16.137 11.679,16.137 11.288,15.74L3.618,7.962"
-                                      Stroke="#C0FFFFFF" StrokeThickness="1.8"
+                                      Data="M17.029,9.577L12.427,14.244C12.192,14.482 11.807,14.482 11.573,14.244L6.971,9.577"
+                                      Stroke="#C0FFFFFF" StrokeThickness="1.6"
                                       StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
                                       Stretch="None" Width="24" Height="24" />
                             </Grid>
