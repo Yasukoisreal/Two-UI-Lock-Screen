@@ -50,6 +50,14 @@ namespace Two_UI_Lock_Screen
         private DispatcherTimer _cameraToastTimer;
         private double cumulativeDragX = 0;
         private double cumulativeDragY = 0;
+        private Storyboard _shortcutPressStory;
+        private Storyboard _shortcutSnapBackStory;
+        private double _shortcutDragX = 0;
+        private double _shortcutDragY = 0;
+        private bool _isShortcutDragging = false;
+        private bool _isRightShortcutActive = false;
+        private bool _hasShortcutVibrated = false;
+        private const double ShortcutUnlockThreshold = 110.0;
 
         public LockView()
         {
@@ -115,6 +123,8 @@ namespace Two_UI_Lock_Screen
                     CameraOverlayTransform.ScaleY = 1.0;
                     CameraOverlay.Opacity = 1.0;
                 }
+                StopShortcutAnimations();
+                ResetShortcutGestureState();
                 double initialPinHeight = GetPinpadHeightDips();
                 if (initialPinHeight > 0)
                 {
@@ -214,6 +224,8 @@ namespace Two_UI_Lock_Screen
                 try { slideStory.Stop(); } catch { }
                 slideStory = null;
             }
+            StopShortcutAnimations();
+            ResetShortcutGestureState();
 
             // 3. Ngắt kết nối tiện ích âm nhạc và dọn dẹp RAM
             DisposeMusicWidget();
@@ -321,8 +333,6 @@ namespace Two_UI_Lock_Screen
             AttachPressEffect(BatteryTileBorder);
             AttachPressEffect(UvTileBorder);
             AttachPressEffect(WeatherTileBorder);
-            AttachPressEffect(LeftShortcutButton);
-            AttachPressEffect(RightShortcutButton);
 
             // Các nút tiện ích âm nhạc One UI 6.1 (Press Feedback)
             AttachPressEffect(MusicArrowBtn);
@@ -1556,49 +1566,443 @@ namespace Two_UI_Lock_Screen
 
         #endregion
 
-        #region Bottom Shortcuts & Camera
+        #region Bottom Shortcuts Manipulation & Quick Launch (One UI 6.1)
 
-        private async void LeftShortcut_Tap(object sender, System.Windows.Input.GestureEventArgs e)
+        private void RightShortcut_ManipulationStarted(object sender, ManipulationStartedEventArgs e)
         {
-            var settings = SettingsManager.Current;
-            if (settings.LeftShortcut == "Calculator")
-            {
-                try
-                {
-                    Microsoft.Devices.VibrateController.Default.Start(TimeSpan.FromMilliseconds(40));
-                }
-                catch { }
-                return;
-            }
-
-            // Mặc định: Chế độ Đèn pin
-            bool isOn = await FlashlightHelper.ToggleAsync();
-            LeftShortcutImage.Source = isOn 
-                ? new BitmapImage(new Uri("/Assets/Icons/ic_shortcut_flash_on.png", UriKind.Relative)) 
-                : new BitmapImage(new Uri("/Assets/Icons/ic_shortcut_flash.png", UriKind.Relative));
+            e.Handled = true;
+            StartShortcutGesture(true);
         }
 
-        private async void RightShortcut_Tap(object sender, System.Windows.Input.GestureEventArgs e)
+        private void RightShortcut_ManipulationDelta(object sender, ManipulationDeltaEventArgs e)
         {
-            var settings = SettingsManager.Current;
-            if (settings.RightShortcut == "Camera")
+            e.Handled = true;
+            UpdateShortcutGestureDelta(e.DeltaManipulation.Translation.X, e.DeltaManipulation.Translation.Y, true);
+        }
+
+        private void RightShortcut_ManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
+        {
+            e.Handled = true;
+            CompleteShortcutGesture(e, true);
+        }
+
+        private void LeftShortcut_ManipulationStarted(object sender, ManipulationStartedEventArgs e)
+        {
+            e.Handled = true;
+            StartShortcutGesture(false);
+        }
+
+        private void LeftShortcut_ManipulationDelta(object sender, ManipulationDeltaEventArgs e)
+        {
+            e.Handled = true;
+            UpdateShortcutGestureDelta(e.DeltaManipulation.Translation.X, e.DeltaManipulation.Translation.Y, false);
+        }
+
+        private void LeftShortcut_ManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
+        {
+            e.Handled = true;
+            CompleteShortcutGesture(e, false);
+        }
+
+        private void StartShortcutGesture(bool isRight)
+        {
+            StopShortcutAnimations();
+            _isRightShortcutActive = isRight;
+            _isShortcutDragging = true;
+            _hasShortcutVibrated = false;
+            _shortcutDragX = 0;
+            _shortcutDragY = 0;
+
+            double w = LayoutRoot.ActualWidth > 0 ? LayoutRoot.ActualWidth : 480.0;
+            double h = LayoutRoot.ActualHeight > 0 ? LayoutRoot.ActualHeight : 800.0;
+            ForegroundTransform.CenterX = w / 2.0;
+            ForegroundTransform.CenterY = h / 2.0;
+
+            var activeBtn = isRight ? RightShortcutButton : LeftShortcutButton;
+            var activeTrans = isRight ? RightShortcutTransform : LeftShortcutTransform;
+            var activePanel = isRight ? CameraSwipePanel : TorchSwipePanel;
+            var activeIcon = isRight ? (UIElement)CameraSwipeIcon : (UIElement)TorchSwipeIcon;
+
+            // Ẩn bảng điều khiển phía đối diện nếu đang hiển thị
+            var inactivePanel = isRight ? TorchSwipePanel : CameraSwipePanel;
+            if (inactivePanel != null) inactivePanel.Visibility = Visibility.Collapsed;
+
+            // Khởi tạo lớp phủ làm tối màn hình khóa
+            if (ShortcutDimOverlay != null)
             {
-                // Tắt đèn pin phần cứng nếu đang bật để tránh xung đột quyền truy cập camera
-                if (FlashlightHelper.IsOn)
+                ShortcutDimOverlay.Visibility = Visibility.Visible;
+                ShortcutDimOverlay.Opacity = 0.0;
+            }
+
+            if (activePanel != null)
+            {
+                activePanel.Visibility = Visibility.Visible;
+                activePanel.Width = 0.0;
+                activePanel.Opacity = 1.0;
+            }
+            if (activeIcon != null)
+            {
+                activeIcon.Opacity = 0.35;
+            }
+
+            // Hiệu ứng chạm & giữ ban đầu (Press & Hold feedback):
+            // Nút thu nhỏ và fade out trong 120ms, lớp nền đen mờ nhú ra từ cạnh màn hình 48px
+            var sb = new Storyboard();
+            var easeOut = new CubicEase { EasingMode = EasingMode.EaseOut };
+
+            if (activeTrans != null)
+            {
+                var scaleX = new DoubleAnimation { To = 0.75, Duration = TimeSpan.FromMilliseconds(120), EasingFunction = easeOut };
+                Storyboard.SetTarget(scaleX, activeTrans);
+                Storyboard.SetTargetProperty(scaleX, new PropertyPath("ScaleX"));
+                sb.Children.Add(scaleX);
+
+                var scaleY = new DoubleAnimation { To = 0.75, Duration = TimeSpan.FromMilliseconds(120), EasingFunction = easeOut };
+                Storyboard.SetTarget(scaleY, activeTrans);
+                Storyboard.SetTargetProperty(scaleY, new PropertyPath("ScaleY"));
+                sb.Children.Add(scaleY);
+            }
+
+            if (activeBtn != null)
+            {
+                var btnFade = new DoubleAnimation { To = 0.0, Duration = TimeSpan.FromMilliseconds(110), EasingFunction = easeOut };
+                Storyboard.SetTarget(btnFade, activeBtn);
+                Storyboard.SetTargetProperty(btnFade, new PropertyPath("Opacity"));
+                sb.Children.Add(btnFade);
+            }
+
+            if (activePanel != null)
+            {
+                var panelPeek = new DoubleAnimation { From = 0.0, To = 48.0, Duration = TimeSpan.FromMilliseconds(120), EasingFunction = easeOut };
+                Storyboard.SetTarget(panelPeek, activePanel);
+                Storyboard.SetTargetProperty(panelPeek, new PropertyPath("Width"));
+                sb.Children.Add(panelPeek);
+            }
+
+            sb.Completed += (s, ev) =>
+            {
+                _shortcutPressStory = null;
+                if (activeTrans != null) { activeTrans.ScaleX = 0.75; activeTrans.ScaleY = 0.75; }
+                if (activeBtn != null) activeBtn.Opacity = 0.0;
+                if (activePanel != null && !_isShortcutDragging) activePanel.Width = 48.0;
+            };
+
+            _shortcutPressStory = sb;
+            sb.Begin();
+        }
+
+        private void UpdateShortcutGestureDelta(double deltaX, double deltaY, bool isRight)
+        {
+            if (!_isShortcutDragging) return;
+
+            if (_shortcutPressStory != null)
+            {
+                try { _shortcutPressStory.Stop(); } catch { }
+                _shortcutPressStory = null;
+            }
+
+            _shortcutDragX += deltaX;
+            _shortcutDragY += deltaY;
+
+            double dist = Math.Sqrt(_shortcutDragX * _shortcutDragX + _shortcutDragY * _shortcutDragY);
+            double progress = Math.Min(1.0, dist / ShortcutUnlockThreshold);
+
+            var activePanel = isRight ? CameraSwipePanel : TorchSwipePanel;
+            var activeIcon = isRight ? (UIElement)CameraSwipeIcon : (UIElement)TorchSwipeIcon;
+            var activeBtn = isRight ? RightShortcutButton : LeftShortcutButton;
+            var activeTrans = isRight ? RightShortcutTransform : LeftShortcutTransform;
+
+            if (activeBtn != null) activeBtn.Opacity = 0.0;
+            if (activeTrans != null) { activeTrans.ScaleX = 0.75; activeTrans.ScaleY = 0.75; }
+
+            // Độ rộng bảng nền đen mờ: mở rộng dần từ 48px tới 230px
+            if (activePanel != null)
+            {
+                double targetWidth = 48.0 + (progress * 182.0);
+                if (dist > ShortcutUnlockThreshold)
                 {
-                    await FlashlightHelper.ToggleAsync();
-                    if (LeftShortcutImage != null)
+                    targetWidth += Math.Min(30.0, (dist - ShortcutUnlockThreshold) * 0.2);
+                }
+                activePanel.Width = targetWidth;
+            }
+
+            // Icon máy ảnh / đèn pin sáng dần từ mờ (0.35) đến rõ nét hoàn toàn (1.0)
+            if (activeIcon != null)
+            {
+                activeIcon.Opacity = 0.35 + (progress * 0.65);
+            }
+
+            // Các tiện ích màn hình khóa thu nhỏ nhẹ (1.0 -> 0.93), tối dần và fade out
+            if (ForegroundTransform != null)
+            {
+                double scale = 1.0 - (progress * 0.07);
+                ForegroundTransform.ScaleX = scale;
+                ForegroundTransform.ScaleY = scale;
+            }
+
+            if (ForegroundPanel != null)
+            {
+                ForegroundPanel.Opacity = Math.Max(0.12, 1.0 - (progress * 0.88));
+            }
+
+            if (ShortcutDimOverlay != null)
+            {
+                ShortcutDimOverlay.Opacity = progress * 0.35;
+            }
+
+            // Rung phản hồi haptic 1 lần khi vuốt đủ xa (vượt ngưỡng)
+            if (dist >= ShortcutUnlockThreshold)
+            {
+                if (!_hasShortcutVibrated)
+                {
+                    _hasShortcutVibrated = true;
+                    try
                     {
-                        LeftShortcutImage.Source = new BitmapImage(new Uri("/Assets/Icons/ic_shortcut_flash.png", UriKind.Relative));
+                        Microsoft.Devices.VibrateController.Default.Start(TimeSpan.FromMilliseconds(25));
                     }
+                    catch { }
                 }
-
-                // Mở In-process Viewfinder với Animation phóng tỏa One UI từ góc dưới phải
-                AnimateOpenCamera();
-                InitializeCamera(CameraType.Primary);
-                HookHardwareCameraButtons();
+            }
+            else
+            {
+                _hasShortcutVibrated = false;
             }
         }
+
+        private void CompleteShortcutGesture(ManipulationCompletedEventArgs e, bool isRight)
+        {
+            if (!_isShortcutDragging) return;
+            _isShortcutDragging = false;
+
+            if (_shortcutPressStory != null)
+            {
+                try { _shortcutPressStory.Stop(); } catch { }
+                _shortcutPressStory = null;
+            }
+
+            double dist = Math.Sqrt(_shortcutDragX * _shortcutDragX + _shortcutDragY * _shortcutDragY);
+            double vx = e.FinalVelocities.LinearVelocity.X;
+            double vy = e.FinalVelocities.LinearVelocity.Y;
+            double vel = Math.Sqrt(vx * vx + vy * vy);
+            bool isFlick = vel >= 800.0;
+            bool triggered = (dist >= ShortcutUnlockThreshold) || isFlick;
+
+            if (triggered)
+            {
+                ExecuteShortcutAction(isRight);
+            }
+            else
+            {
+                AnimateShortcutBack(isRight);
+            }
+        }
+
+        private async void ExecuteShortcutAction(bool isRight)
+        {
+            var settings = SettingsManager.Current;
+
+            if (isRight)
+            {
+                // Phím tắt Phải: Mặc định Máy ảnh (Camera)
+                ResetShortcutGestureState();
+
+                if (settings.RightShortcut == "Camera")
+                {
+                    // Tắt đèn pin phần cứng nếu đang bật để tránh xung đột quyền truy cập camera
+                    if (FlashlightHelper.IsOn)
+                    {
+                        await FlashlightHelper.ToggleAsync();
+                        if (LeftShortcutImage != null)
+                        {
+                            LeftShortcutImage.Source = new BitmapImage(new Uri("/Assets/Icons/ic_shortcut_flash.png", UriKind.Relative));
+                        }
+                    }
+
+                    // Mở In-process Viewfinder với Animation phóng tỏa One UI từ góc dưới phải
+                    AnimateOpenCamera();
+                    InitializeCamera(CameraType.Primary);
+                    HookHardwareCameraButtons();
+                }
+            }
+            else
+            {
+                // Phím tắt Trái: Đèn pin - Thu gọn bảng điều khiển êm ái về vị trí cũ
+                AnimateShortcutBack(false);
+
+                if (settings.LeftShortcut == "Calculator")
+                {
+                    try
+                    {
+                        Microsoft.Devices.VibrateController.Default.Start(TimeSpan.FromMilliseconds(40));
+                    }
+                    catch { }
+                    return;
+                }
+
+                // Mặc định: Chế độ Đèn pin
+                bool isOn = await FlashlightHelper.ToggleAsync();
+                if (LeftShortcutImage != null)
+                {
+                    LeftShortcutImage.Source = isOn 
+                        ? new BitmapImage(new Uri("/Assets/Icons/ic_shortcut_flash_on.png", UriKind.Relative)) 
+                        : new BitmapImage(new Uri("/Assets/Icons/ic_shortcut_flash.png", UriKind.Relative));
+                }
+            }
+        }
+
+        private void AnimateShortcutBack(bool isRight)
+        {
+            StopShortcutAnimations();
+
+            var activeBtn = isRight ? RightShortcutButton : LeftShortcutButton;
+            var activeTrans = isRight ? RightShortcutTransform : LeftShortcutTransform;
+            var activePanel = isRight ? CameraSwipePanel : TorchSwipePanel;
+
+            var sb = new Storyboard();
+            var easeOut = new CubicEase { EasingMode = EasingMode.EaseOut };
+            var duration = TimeSpan.FromMilliseconds(220);
+
+            // 1. Thu nhỏ chiều rộng panel về 0 và mờ dần
+            if (activePanel != null && activePanel.Width > 0)
+            {
+                var panelWidthAnim = new DoubleAnimation
+                {
+                    To = 0.0,
+                    Duration = duration,
+                    EasingFunction = easeOut
+                };
+                Storyboard.SetTarget(panelWidthAnim, activePanel);
+                Storyboard.SetTargetProperty(panelWidthAnim, new PropertyPath("Width"));
+                sb.Children.Add(panelWidthAnim);
+
+                var panelFadeAnim = new DoubleAnimation
+                {
+                    To = 0.0,
+                    Duration = duration,
+                    EasingFunction = easeOut
+                };
+                Storyboard.SetTarget(panelFadeAnim, activePanel);
+                Storyboard.SetTargetProperty(panelFadeAnim, new PropertyPath("Opacity"));
+                sb.Children.Add(panelFadeAnim);
+            }
+
+            // 2. Phục hồi nút góc về Scale 1.0 và Opacity 1.0
+            if (activeTrans != null)
+            {
+                var scaleXAnim = new DoubleAnimation { To = 1.0, Duration = duration, EasingFunction = easeOut };
+                Storyboard.SetTarget(scaleXAnim, activeTrans);
+                Storyboard.SetTargetProperty(scaleXAnim, new PropertyPath("ScaleX"));
+                sb.Children.Add(scaleXAnim);
+
+                var scaleYAnim = new DoubleAnimation { To = 1.0, Duration = duration, EasingFunction = easeOut };
+                Storyboard.SetTarget(scaleYAnim, activeTrans);
+                Storyboard.SetTargetProperty(scaleYAnim, new PropertyPath("ScaleY"));
+                sb.Children.Add(scaleYAnim);
+            }
+
+            if (activeBtn != null)
+            {
+                var btnFadeAnim = new DoubleAnimation { To = 1.0, Duration = duration, EasingFunction = easeOut };
+                Storyboard.SetTarget(btnFadeAnim, activeBtn);
+                Storyboard.SetTargetProperty(btnFadeAnim, new PropertyPath("Opacity"));
+                sb.Children.Add(btnFadeAnim);
+            }
+
+            // 3. Phục hồi tiện ích màn hình khóa về Scale 1.0 và Opacity 1.0
+            if (ForegroundTransform != null && (ForegroundTransform.ScaleX != 1.0 || ForegroundTransform.ScaleY != 1.0))
+            {
+                var fgScaleX = new DoubleAnimation { To = 1.0, Duration = duration, EasingFunction = easeOut };
+                Storyboard.SetTarget(fgScaleX, ForegroundTransform);
+                Storyboard.SetTargetProperty(fgScaleX, new PropertyPath("ScaleX"));
+                sb.Children.Add(fgScaleX);
+
+                var fgScaleY = new DoubleAnimation { To = 1.0, Duration = duration, EasingFunction = easeOut };
+                Storyboard.SetTarget(fgScaleY, ForegroundTransform);
+                Storyboard.SetTargetProperty(fgScaleY, new PropertyPath("ScaleY"));
+                sb.Children.Add(fgScaleY);
+            }
+
+            if (ForegroundPanel != null && ForegroundPanel.Opacity < 1.0)
+            {
+                var fgFade = new DoubleAnimation { To = 1.0, Duration = duration, EasingFunction = easeOut };
+                Storyboard.SetTarget(fgFade, ForegroundPanel);
+                Storyboard.SetTargetProperty(fgFade, new PropertyPath("Opacity"));
+                sb.Children.Add(fgFade);
+            }
+
+            // 4. Phục hồi lớp phủ tối ShortcutDimOverlay về 0.0
+            if (ShortcutDimOverlay != null && ShortcutDimOverlay.Opacity > 0.0)
+            {
+                var dimFade = new DoubleAnimation { To = 0.0, Duration = duration, EasingFunction = easeOut };
+                Storyboard.SetTarget(dimFade, ShortcutDimOverlay);
+                Storyboard.SetTargetProperty(dimFade, new PropertyPath("Opacity"));
+                sb.Children.Add(dimFade);
+            }
+
+            sb.Completed += (s, ev) =>
+            {
+                _shortcutSnapBackStory = null;
+                ResetShortcutGestureState();
+            };
+
+            _shortcutSnapBackStory = sb;
+            sb.Begin();
+        }
+
+        private void StopShortcutAnimations()
+        {
+            if (_shortcutPressStory != null)
+            {
+                try { _shortcutPressStory.Stop(); } catch { }
+                _shortcutPressStory = null;
+            }
+            if (_shortcutSnapBackStory != null)
+            {
+                try { _shortcutSnapBackStory.Stop(); } catch { }
+                _shortcutSnapBackStory = null;
+            }
+        }
+
+        private void ResetShortcutGestureState()
+        {
+            _isShortcutDragging = false;
+            _hasShortcutVibrated = false;
+            _shortcutDragX = 0;
+            _shortcutDragY = 0;
+
+            if (CameraSwipePanel != null)
+            {
+                CameraSwipePanel.Visibility = Visibility.Collapsed;
+                CameraSwipePanel.Width = 0.0;
+                CameraSwipePanel.Opacity = 1.0;
+            }
+            if (CameraSwipeIcon != null) CameraSwipeIcon.Opacity = 0.35;
+
+            if (TorchSwipePanel != null)
+            {
+                TorchSwipePanel.Visibility = Visibility.Collapsed;
+                TorchSwipePanel.Width = 0.0;
+                TorchSwipePanel.Opacity = 1.0;
+            }
+            if (TorchSwipeIcon != null) TorchSwipeIcon.Opacity = 0.35;
+
+            if (ShortcutDimOverlay != null)
+            {
+                ShortcutDimOverlay.Visibility = Visibility.Collapsed;
+                ShortcutDimOverlay.Opacity = 0.0;
+            }
+
+            if (LeftShortcutButton != null) LeftShortcutButton.Opacity = 1.0;
+            if (LeftShortcutTransform != null) { LeftShortcutTransform.ScaleX = 1.0; LeftShortcutTransform.ScaleY = 1.0; }
+
+            if (RightShortcutButton != null) RightShortcutButton.Opacity = 1.0;
+            if (RightShortcutTransform != null) { RightShortcutTransform.ScaleX = 1.0; RightShortcutTransform.ScaleY = 1.0; }
+
+            if (ForegroundTransform != null) { ForegroundTransform.ScaleX = 1.0; ForegroundTransform.ScaleY = 1.0; }
+            if (ForegroundPanel != null) ForegroundPanel.Opacity = 1.0;
+        }
+
+        #endregion
 
         private void CloseCamera_Tap(object sender, System.Windows.Input.GestureEventArgs e)
         {
@@ -2367,8 +2771,6 @@ namespace Two_UI_Lock_Screen
             _shutterFlashStory = sb;
             sb.Begin();
         }
-
-        #endregion
 
         #endregion
 

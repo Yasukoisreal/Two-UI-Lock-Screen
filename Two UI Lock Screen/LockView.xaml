@@ -414,9 +414,11 @@
             <Border x:Name="LeftShortcutButton" Width="50" Height="50"
                     Background="Transparent"
                     HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="24,0,0,24"
-                    Tap="LeftShortcut_Tap">
+                    ManipulationStarted="LeftShortcut_ManipulationStarted"
+                    ManipulationDelta="LeftShortcut_ManipulationDelta"
+                    ManipulationCompleted="LeftShortcut_ManipulationCompleted">
                 <Border.RenderTransform>
-                    <CompositeTransform CenterX="25" CenterY="25" />
+                    <CompositeTransform x:Name="LeftShortcutTransform" CenterX="25" CenterY="25" />
                 </Border.RenderTransform>
                 <Image x:Name="LeftShortcutImage" Source="/Assets/Icons/ic_shortcut_flash.png"
                        Width="50" Height="50" Stretch="Uniform"
@@ -427,15 +429,42 @@
             <Border x:Name="RightShortcutButton" Width="50" Height="50"
                     Background="Transparent"
                     HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,24,24"
-                    Tap="RightShortcut_Tap">
+                    ManipulationStarted="RightShortcut_ManipulationStarted"
+                    ManipulationDelta="RightShortcut_ManipulationDelta"
+                    ManipulationCompleted="RightShortcut_ManipulationCompleted">
                 <Border.RenderTransform>
-                    <CompositeTransform CenterX="25" CenterY="25" />
+                    <CompositeTransform x:Name="RightShortcutTransform" CenterX="25" CenterY="25" />
                 </Border.RenderTransform>
                 <Image x:Name="RightShortcutImage" Source="/Assets/Icons/ic_shortcut_camera.png"
                        Width="50" Height="50" Stretch="Uniform"
                        HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
         </Grid>
+
+        <!-- Lớp phủ làm tối màn hình khóa khi vuốt phím tắt One UI 6.1 -->
+        <Rectangle x:Name="ShortcutDimOverlay" Fill="Black" Opacity="0.0"
+                   IsHitTestVisible="False" Visibility="Collapsed"
+                   HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+
+        <!-- Bảng nền đen mờ vuốt phím tắt Đèn pin (Trái) -->
+        <Border x:Name="TorchSwipePanel" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                Margin="0,0,0,17" Height="64" Width="0" CornerRadius="0,32,32,0"
+                Background="#D0101010" IsHitTestVisible="False" Visibility="Collapsed">
+            <Image x:Name="TorchSwipeIcon" Source="/Assets/Icons/ic_shortcut_flash_white.png"
+                   Width="28" Height="28" Stretch="Uniform"
+                   HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,18,0"
+                   Opacity="0.35" />
+        </Border>
+
+        <!-- Bảng nền đen mờ vuốt phím tắt Máy ảnh (Phải) -->
+        <Border x:Name="CameraSwipePanel" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                Margin="0,0,0,17" Height="64" Width="0" CornerRadius="32,0,0,32"
+                Background="#D0101010" IsHitTestVisible="False" Visibility="Collapsed">
+            <Image x:Name="CameraSwipeIcon" Source="/Assets/Icons/ic_shortcut_camera_white.png"
+                   Width="30" Height="26" Stretch="Uniform"
+                   HorizontalAlignment="Left" VerticalAlignment="Center" Margin="17,0,0,0"
+                   Opacity="0.35" />
+        </Border>
 
         <!-- Layer 3: In-process Quick Camera Viewfinder Overlay (Samsung One UI 6.1 Camera) -->
         <Grid x:Name="CameraOverlay" Visibility="Collapsed" Background="Black">
