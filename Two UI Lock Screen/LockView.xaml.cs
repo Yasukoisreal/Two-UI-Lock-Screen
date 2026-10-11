@@ -3805,7 +3805,7 @@ namespace Two_UI_Lock_Screen
                     }
                     if (MusicBgTransform != null) { MusicBgTransform.ScaleX = 1.25; MusicBgTransform.ScaleY = 1.25; }
 
-                    if (MusicArrowTransform != null) MusicArrowTransform.Rotation = 180.0;
+                    if (MusicArrowTransform != null) MusicArrowTransform.Rotation = -180.0;
                     MusicWidgetCard.Height = MusicExpandedCardHeight;
                 }
                 else
@@ -4098,11 +4098,11 @@ namespace Two_UI_Lock_Screen
             Storyboard.SetTargetProperty(cardHeightAnim, new PropertyPath("Height"));
             sb.Children.Add(cardHeightAnim);
 
-            // 2. Mũi tên điều hướng xoay 180 độ quanh tâm giữa (0 -> 180 trong 330ms)
+            // 2. Mũi tên điều hướng xoay ngược chiều kim đồng hồ quanh tâm giữa (0 -> -180 trong 330ms)
             var arrowAnim = new DoubleAnimation
             {
                 From = fromRotation,
-                To = 180.0,
+                To = -180.0,
                 Duration = TimeSpan.FromMilliseconds(330),
                 EasingFunction = easeOut
             };
@@ -4215,7 +4215,7 @@ namespace Two_UI_Lock_Screen
             {
                 musicTransitionStory = null;
                 MusicWidgetCard.Height = MusicExpandedCardHeight;
-                if (MusicArrowTransform != null) MusicArrowTransform.Rotation = 180.0;
+                if (MusicArrowTransform != null) MusicArrowTransform.Rotation = -180.0;
                 if (MusicCollapsedInfoTransform != null) MusicCollapsedInfoTransform.TranslateX = -68.0;
 
                 if (MusicThumbBorderCollapsed != null)
@@ -4309,7 +4309,7 @@ namespace Two_UI_Lock_Screen
             Storyboard.SetTargetProperty(cardHeightAnim, new PropertyPath("Height"));
             sb.Children.Add(cardHeightAnim);
 
-            // 2. Mũi tên điều hướng xoay ngược lại quanh tâm giữa (180 -> 0 trong 280ms)
+            // 2. Mũi tên điều hướng xoay cùng chiều kim đồng hồ trở về ban đầu (-180 -> 0 trong 280ms)
             var arrowAnim = new DoubleAnimation
             {
                 From = fromRotation,
