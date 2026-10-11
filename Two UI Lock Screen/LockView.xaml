@@ -320,7 +320,7 @@
                                     </Grid>
 
                                     <!-- Mốc thời gian phút:giây 2 bên: Căn đều 0px bằng chuẩn xác với 2 đầu thanh seekbar, tăng cỡ chữ lên 12 -->
-                                    <Grid Grid.Row="1" Margin="0,3,0,0">
+                                    <Grid Grid.Row="1" Margin="0,3,0,0" IsHitTestVisible="False">
                                         <TextBlock x:Name="MusicCurrentTimeText" Text="00:00" FontSize="12" Foreground="#B0C0CC"
                                                    FontFamily="{StaticResource SamsungSans}" HorizontalAlignment="Left" />
                                         <TextBlock x:Name="MusicTotalTimeText" Text="00:00" FontSize="12" Foreground="#B0C0CC"
