@@ -336,7 +336,6 @@ namespace Two_UI_Lock_Screen
             AttachPressEffect(WeatherTileBorder);
 
             // Các nút tiện ích âm nhạc One UI 6.1 (Hiệu ứng nổi bật / Ripple Highlight tròn như Android)
-            AttachButtonHighlightEffect(MusicArrowBtn);
             AttachButtonHighlightEffect(MusicPrevBtnCollapsed);
             AttachButtonHighlightEffect(MusicPlayPauseBtnCollapsed);
             AttachButtonHighlightEffect(MusicNextBtnCollapsed);

@@ -260,18 +260,20 @@
                             <TextBlock Text="Đầu ra media" FontSize="11" Foreground="#FFFFFE" FontFamily="{StaticResource SamsungSans}" VerticalAlignment="Center" />
                         </Border>
 
-                        <!-- NÚT MŨI TÊN ĐIỀU HƯỚNG GÓC TRÊN BÊN PHẢI (Xoay chuẩn xác tại đầu nhọn mũi tên) -->
-                        <Border x:Name="MusicArrowBtn" Width="32" Height="32" CornerRadius="16"
+                        <!-- NÚT MŨI TÊN ĐIỀU HƯỚNG GÓC TRÊN BÊN PHẢI (Vector chính thức Samsung One UI 6.1 SystemUI arrow_enabled_down) -->
+                        <Border x:Name="MusicArrowBtn" Width="32" Height="32"
                                 HorizontalAlignment="Right" VerticalAlignment="Top"
                                 Margin="0,8,8,0" Background="Transparent"
                                 Tap="MusicArrow_Tap">
-                            <Grid Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid Width="24" Height="24" HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <Grid.RenderTransform>
-                                    <CompositeTransform x:Name="MusicArrowTransform" CenterX="8" CenterY="8" Rotation="0" />
+                                    <CompositeTransform x:Name="MusicArrowTransform" CenterX="12" CenterY="12" Rotation="0" />
                                 </Grid.RenderTransform>
-                                <Path x:Name="MusicArrowPath" Data="M 2.5,2.5 L 8,8 L 13.5,2.5" Stroke="#C0FFFFFF" StrokeThickness="2.2"
+                                <Path x:Name="MusicArrowPath"
+                                      Data="M20.382,7.962L12.712,15.74C12.32,16.137 11.679,16.137 11.288,15.74L3.618,7.962"
+                                      Stroke="#C0FFFFFF" StrokeThickness="1.8"
                                       StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
-                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                      Stretch="None" Width="24" Height="24" />
                             </Grid>
                         </Border>
 
