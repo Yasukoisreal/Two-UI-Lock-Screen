@@ -374,20 +374,12 @@ namespace Two_UI_Lock_Screen
         {
             if (border == null) return;
 
-            var transform = border.RenderTransform as CompositeTransform;
-            if (transform == null)
-            {
-                transform = new CompositeTransform();
-                border.RenderTransform = transform;
-                border.RenderTransformOrigin = new Point(0.5, 0.5);
-            }
-
             border.ManipulationStarted += (s, e) =>
             {
                 try
                 {
-                    AnimateScale(transform, 0.90, 70);
-                    border.Background = new SolidColorBrush(Color.FromArgb(0x35, 0xFF, 0xFF, 0xFE));
+                    // Chỉ làm sáng nổi bật hình tròn theo yêu cầu, không co nhẹ kích thước
+                    border.Background = new SolidColorBrush(Color.FromArgb(0x40, 0xFF, 0xFF, 0xFE));
                 }
                 catch { }
             };
@@ -396,7 +388,6 @@ namespace Two_UI_Lock_Screen
             {
                 try
                 {
-                    AnimateScale(transform, 1.0, 160);
                     AnimateBorderBackgroundFadeOut(border);
                 }
                 catch { }
