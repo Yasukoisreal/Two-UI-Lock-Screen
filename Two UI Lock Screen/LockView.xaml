@@ -460,11 +460,11 @@
                     <CompositeTransform x:Name="TorchSwipePanelTransform" TranslateX="-480" />
                 </Border.RenderTransform>
                 <Image x:Name="TorchSwipeIcon" Source="/Assets/Icons/ic_shortcut_flash_white.png"
-                       Width="34" Height="34" Stretch="Uniform"
-                       HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,195,0"
+                       Width="64" Height="64" Stretch="Uniform"
+                       HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,160,0"
                        Opacity="0.35">
                     <Image.RenderTransform>
-                        <CompositeTransform x:Name="TorchSwipeIconTransform" CenterX="17" CenterY="17" ScaleX="1.0" ScaleY="1.0" />
+                        <CompositeTransform x:Name="TorchSwipeIconTransform" CenterX="32" CenterY="32" ScaleX="1.0" ScaleY="1.0" />
                     </Image.RenderTransform>
                 </Image>
             </Border>
@@ -477,11 +477,11 @@
                     <CompositeTransform x:Name="CameraSwipePanelTransform" TranslateX="480" />
                 </Border.RenderTransform>
                 <Image x:Name="CameraSwipeIcon" Source="/Assets/Icons/ic_shortcut_camera_white.png"
-                       Width="36" Height="32" Stretch="Uniform"
-                       HorizontalAlignment="Left" VerticalAlignment="Center" Margin="195,0,0,0"
+                       Width="64" Height="64" Stretch="Uniform"
+                       HorizontalAlignment="Left" VerticalAlignment="Center" Margin="160,0,0,0"
                        Opacity="0.35">
                     <Image.RenderTransform>
-                        <CompositeTransform x:Name="CameraSwipeIconTransform" CenterX="18" CenterY="16" ScaleX="1.0" ScaleY="1.0" />
+                        <CompositeTransform x:Name="CameraSwipeIconTransform" CenterX="32" CenterY="32" ScaleX="1.0" ScaleY="1.0" />
                     </Image.RenderTransform>
                 </Image>
             </Border>
