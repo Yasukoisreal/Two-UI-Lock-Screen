@@ -2299,56 +2299,11 @@ namespace Two_UI_Lock_Screen
                 cameraAnimStory = null;
             }
 
+            // Nền đen đã tràn toàn màn hình từ cử chỉ vuốt, hiển thị CameraOverlay trực tiếp ở Scale 1.0 và Opacity 1.0
+            CameraOverlayTransform.ScaleX = 1.0;
+            CameraOverlayTransform.ScaleY = 1.0;
+            CameraOverlay.Opacity = 1.0;
             CameraOverlay.Visibility = Visibility.Visible;
-            CameraOverlay.Opacity = 0.0;
-            CameraOverlayTransform.ScaleX = 0.08;
-            CameraOverlayTransform.ScaleY = 0.08;
-
-            var sb = new Storyboard();
-
-            var scaleXAnim = new DoubleAnimation
-            {
-                From = 0.08,
-                To = 1.0,
-                Duration = TimeSpan.FromMilliseconds(280),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            Storyboard.SetTarget(scaleXAnim, CameraOverlayTransform);
-            Storyboard.SetTargetProperty(scaleXAnim, new PropertyPath("ScaleX"));
-            sb.Children.Add(scaleXAnim);
-
-            var scaleYAnim = new DoubleAnimation
-            {
-                From = 0.08,
-                To = 1.0,
-                Duration = TimeSpan.FromMilliseconds(280),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            Storyboard.SetTarget(scaleYAnim, CameraOverlayTransform);
-            Storyboard.SetTargetProperty(scaleYAnim, new PropertyPath("ScaleY"));
-            sb.Children.Add(scaleYAnim);
-
-            var opacityAnim = new DoubleAnimation
-            {
-                From = 0.0,
-                To = 1.0,
-                Duration = TimeSpan.FromMilliseconds(200),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            Storyboard.SetTarget(opacityAnim, CameraOverlay);
-            Storyboard.SetTargetProperty(opacityAnim, new PropertyPath("Opacity"));
-            sb.Children.Add(opacityAnim);
-
-            sb.Completed += (s, e) =>
-            {
-                cameraAnimStory = null;
-                CameraOverlayTransform.ScaleX = 1.0;
-                CameraOverlayTransform.ScaleY = 1.0;
-                CameraOverlay.Opacity = 1.0;
-            };
-
-            cameraAnimStory = sb;
-            sb.Begin();
         }
 
         private void AnimateCloseCamera()
@@ -2360,32 +2315,15 @@ namespace Two_UI_Lock_Screen
             }
 
             var sb = new Storyboard();
+            var easeOut = new CubicEase { EasingMode = EasingMode.EaseOut };
 
-            var scaleXAnim = new DoubleAnimation
-            {
-                To = 0.08,
-                Duration = TimeSpan.FromMilliseconds(220),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
-            };
-            Storyboard.SetTarget(scaleXAnim, CameraOverlayTransform);
-            Storyboard.SetTargetProperty(scaleXAnim, new PropertyPath("ScaleX"));
-            sb.Children.Add(scaleXAnim);
-
-            var scaleYAnim = new DoubleAnimation
-            {
-                To = 0.08,
-                Duration = TimeSpan.FromMilliseconds(220),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
-            };
-            Storyboard.SetTarget(scaleYAnim, CameraOverlayTransform);
-            Storyboard.SetTargetProperty(scaleYAnim, new PropertyPath("ScaleY"));
-            sb.Children.Add(scaleYAnim);
-
+            // Đóng camera: mờ dần (dissolve) êm ái về màn hình khóa, không co rút về góc
             var opacityAnim = new DoubleAnimation
             {
+                From = 1.0,
                 To = 0.0,
-                Duration = TimeSpan.FromMilliseconds(180),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+                Duration = TimeSpan.FromMilliseconds(200),
+                EasingFunction = easeOut
             };
             Storyboard.SetTarget(opacityAnim, CameraOverlay);
             Storyboard.SetTargetProperty(opacityAnim, new PropertyPath("Opacity"));
